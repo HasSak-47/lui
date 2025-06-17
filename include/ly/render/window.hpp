@@ -2,7 +2,7 @@
 #define __RENDER_WINDOW_HPP__
 
 #include <ly/int.hpp>
-#include <render/buffer.hpp>
+#include <ly/render/buffer.hpp>
 
 namespace ly::render {
 class Window {
