@@ -1,10 +1,10 @@
 #ifndef __RENDER_BUFFER_HPP__
 #define __RENDER_BUFFER_HPP__
 
-#include <concepts>
-#include <iostream>
 #include <ly/int.hpp>
 
+#include <concepts>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <vector>

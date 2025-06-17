@@ -1,7 +1,6 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
 #include <lua.hpp>
 
 #include <thread>
@@ -9,11 +8,10 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include <render/buffer.hpp>
-#include <render/lua_bindings.hpp>
-#include <render/widgets.hpp>
-#include <render/window.hpp>
-#include <system/system.hpp>
+#include <render/ly/buffer.hpp>
+#include <render/ly/lua_bindings.hpp>
+#include <render/ly/widgets.hpp>
+#include <render/ly/window.hpp>
 
 bool got_original = false;
 
