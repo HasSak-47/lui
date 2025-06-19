@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include <render/buffer.hpp>
+#include <ly/render/buffer.hpp>
 
 namespace ly::render {
 const ConsoleColor ConsoleColor::WHITE =

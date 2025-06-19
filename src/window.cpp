@@ -3,8 +3,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#include <render/window.hpp>
-#include "render/buffer.hpp"
+#include <ly/render/buffer.hpp>
+#include <ly/render/window.hpp>
 
 using namespace ly::render;
 
@@ -27,6 +27,7 @@ Window::Window() : _back(_back_gen()) {
 Window::~Window() {}
 
 void Window::render() {
+    return;
     ConsoleColor last = ConsoleColor::WHITE;
     last.display();
     char buf[5] = {};

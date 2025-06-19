@@ -6,6 +6,7 @@ luall
 .env
 log.txt
 monitor
+test
 
 # python
 **/__pycache__

@@ -1,8 +1,8 @@
 #ifndef __RENDER_WIDGETS_HPP__
 #define __RENDER_WIDGETS_HPP__
 
+#include <ly/render/buffer.hpp>
 #include <vector>
-#include "render/buffer.hpp"
 
 namespace ly::render::widgets {
 

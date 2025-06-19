@@ -19,24 +19,36 @@
 ---@class Buffer
 ---@field cell Unit[][]
 
+---@class Widget
+---@field new function
+
+---@class Widget
 local Bar = widget:new {
-    render = function(buffer, tick)
+    render = function(self, buffer)
         local x, _ = buffer:get_size();
-        buffer.set(1, 1, '[', { type = "bit", r = 1, g = 1, b = 1 })
-        buffer.set(x, 1, ']', { type = "bit", r = 1, g = 1, b = 1 })
+        buffer:set(1, 1, '[', { type = "bit", r = 1, g = 1, b = 1 })
+        buffer:set(x, 1, ']', { type = "bit", r = 1, g = 1, b = 1 })
         for i = 2, x - 1, 1 do
-            buffer.set(x, 1, '|', { type = "bit", r = 1, g = 1, b = 1 })
+            buffer:set(x, 1, '|', { type = "bit", r = 1, g = 1, b = 1 })
         end
     end
 };
 
-return widet:new {
-    render = function(buffer, tick)
-        local x, y = buffer:get_size();
-        local bar1 = Bar:new()
-        local bar2 = Bar:new()
+local keys = ''
 
-        Bar:render(buffer.get_subbuffer(1, 1, x, 1));
-        Bar:render(buffer.get_subbuffer(1, 2, x, 1));
+state.on_event('keypress', function(key)
+    if key == 'q' then
+        state.exit = true;
+        return
+    end
+    keys = keys + key
+end)
+
+
+return widget:new {
+    render = function(self, buffer)
+        local x, _ = buffer:get_size();
+        Bar:new(buffer:get_sub(0, 0, x, 1));
+        Bar:new(buffer:get_sub(0, 1, x, 1));
     end
 }

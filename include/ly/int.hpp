@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 
 namespace ly {
 #define MAKE_INT(p)                                        \

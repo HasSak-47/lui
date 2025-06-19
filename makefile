@@ -1,5 +1,8 @@
+all: compile
+
 SRC_DIR := src
 OBJ_DIR := build
+SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
 SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
 OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o,$(SRCS)) $(OUT_RUST_LIB)
 
@@ -11,8 +14,6 @@ CFLAGS := -g -shared -I include -c -Wall -std=c++23 -MMD -MP -llua
 LDFLAGS := -o $(OUT) -llua
 
 -include $(OBJS:.o=.d)
-
-all: compile
 
 compile: $(OUT)
 

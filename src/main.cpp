@@ -8,10 +8,10 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include <render/ly/buffer.hpp>
-#include <render/ly/lua_bindings.hpp>
-#include <render/ly/widgets.hpp>
-#include <render/ly/window.hpp>
+#include <ly/render/buffer.hpp>
+#include <ly/render/lua_bindings.hpp>
+#include <ly/render/widgets.hpp>
+#include <ly/render/window.hpp>
 
 bool got_original = false;
 
@@ -52,11 +52,20 @@ int main(int argc, char* argv[]) {
 
     ly::render::lua::lua_init();
 
+    render::lua::LuaWidget root_widget("init.lua");
+
     float fps    = 0.;
     size_t frame = 0;
-    while (true) {
+    char cbuf    = 0;
+    while (!ly::render::lua::should_exit()) {
         auto t_start = high_resolution_clock::now();
         printf("\e[0;0H"); // return cursor to 0,0
+        if (read(STDIN_FILENO, &cbuf, 1) > 0) {
+            render::lua::handle_keypress(cbuf);
+        }
+
+        win.get_buf().render_widget(root_widget);
+        win.render();
 
         // frame rate calc
         auto t_now = high_resolution_clock::now();
