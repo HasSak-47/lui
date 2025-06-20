@@ -9,7 +9,7 @@ OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o,$(SRCS)) $(OUT_RUST_LIB)
 OUT := test
 
 C := g++
-CFLAGS := -g -shared -I include -c -Wall -std=c++23 -MMD -MP -llua
+CFLAGS := -g -shared -I include -c -std=c++23 -MMD -MP -llua
 
 LDFLAGS := -o $(OUT) -llua
 

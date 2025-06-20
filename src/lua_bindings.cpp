@@ -1,12 +1,13 @@
 #include <cstdio>
 #include <cstdlib>
+
 #include <ly/render/buffer.hpp>
 #include <ly/render/lua_bindings.hpp>
 #include <ly/render/widgets.hpp>
+
 #include <stdexcept>
 #include <unordered_map>
-
-lua_State* ly::render::lua::L = nullptr;
+#include <utility>
 
 using namespace ly::render;
 
@@ -177,10 +178,13 @@ lua::Value::ArrayType& lua::Value::as_array() {
 }
 
 lua::Value& lua::Value::operator[](const std::string& key) {
-    if (type_ != Ty::Map) {
-        throw std::runtime_error("lua::Value is not a map");
-    }
-    return std::get<MapType>(data_)[key];
+    throw std::runtime_error("lua::Value is not a map");
+    std::unreachable();
+    // if (type_ != Ty::Map) {
+    //     throw std::runtime_error("lua::Value is not a
+    //     map");
+    // }
+    // return std::get<MapType>(data_)[key];
 }
 
 const lua::Value& lua::Value::operator[](
@@ -359,109 +363,112 @@ static int _buffer_set(lua_State* L) {
     return 0;
 }
 
-static void init_buffer_ref_metatable() {
-    luaL_newmetatable(lua::L, "BufferRef");
+static void init_buffer_ref_metatable(lua_State* L) {
+    luaL_newmetatable(L, "BufferRef");
 
-    lua_pushcfunction(lua::L, _buffer_set);
-    lua_setfield(lua::L, -2, "set");
+    lua_pushcfunction(L, _buffer_set);
+    lua_setfield(L, -2, "set");
 
-    lua_pushcfunction(lua::L, _buffer_get_size);
-    lua_setfield(lua::L, -2, "get_size");
+    lua_pushcfunction(L, _buffer_get_size);
+    lua_setfield(L, -2, "get_size");
 
-    lua_pushcfunction(lua::L, _buffer_get_sub);
-    lua_setfield(lua::L, -2, "get_sub");
+    lua_pushcfunction(L, _buffer_get_sub);
+    lua_setfield(L, -2, "get_sub");
 
-    lua_pushvalue(lua::L, -1);
-    lua_setfield(lua::L, -2, "__index");
+    lua_pushvalue(L, -1);
+    lua_setfield(L, -2, "__index");
 
-    lua_pop(lua::L, 1);
+    lua_pop(L, 1);
 }
 
-static void init_buffer_metatable() {
-    luaL_newmetatable(lua::L, "Buffer");
+static void init_buffer_metatable(lua_State* L) {
+    luaL_newmetatable(L, "Buffer");
 
-    lua_pushcfunction(lua::L, _buffer_set);
-    lua_setfield(lua::L, -2, "set");
+    lua_pushcfunction(L, _buffer_set);
+    lua_setfield(L, -2, "set");
 
-    lua_pushcfunction(lua::L, _buffer_get_size);
-    lua_setfield(lua::L, -2, "get_size");
+    lua_pushcfunction(L, _buffer_get_size);
+    lua_setfield(L, -2, "get_size");
 
-    lua_pushcfunction(lua::L, _buffer_get_sub);
-    lua_setfield(lua::L, -2, "get_sub");
+    lua_pushcfunction(L, _buffer_get_sub);
+    lua_setfield(L, -2, "get_sub");
 
-    lua_pushcfunction(lua::L, _buffer_gc);
-    lua_setfield(lua::L, -2, "__gc");
+    lua_pushcfunction(L, _buffer_gc);
+    lua_setfield(L, -2, "__gc");
 
-    lua_pushvalue(lua::L, -1);
-    lua_setfield(lua::L, -2, "__index");
+    lua_pushvalue(L, -1);
+    lua_setfield(L, -2, "__index");
 
-    lua_pop(lua::L, 1);
+    lua_pop(L, 1);
 }
 
 // ----[widget]----
-lua::LuaWidget::LuaWidget(std::string path) {
-    if (luaL_dofile(L, path.c_str()) != LUA_OK) {
-        std::string err = lua_tostring(L, -1);
-        lua_pop(L, 1);
-        throw std::runtime_error("Lua error: " + err);
-    }
+lua::LuaWidget::LuaWidget(std::weak_ptr<lua_State> L)
+    : L(L) {
+    auto L_locked = this->L.lock();
+    auto Lg       = L_locked.get();
 
-    int top = lua_gettop(L);
+    int top = lua_gettop(Lg);
     if (top == 0)
         throw std::runtime_error("no widget returned");
 
-    if (!lua_istable(L, -1) && !lua_isuserdata(L, -1))
+    if (!lua_istable(Lg, -1) && !lua_isuserdata(Lg, -1))
         throw std::runtime_error(
             "returned value is not table/userdata");
 
-    if (!lua_getmetatable(L, -1))
+    if (!lua_getmetatable(Lg, -1))
         throw std::runtime_error("widget has no metatable");
 
-    luaL_getmetatable(L, "Widget");
+    luaL_getmetatable(Lg, "Widget");
 
-    if (!lua_rawequal(L, -1, -2)) {
-        lua_pop(L, 3);
+    if (!lua_rawequal(Lg, -1, -2)) {
+        lua_pop(Lg, 3);
         throw std::runtime_error(
             "widget metatable mismatch");
     }
 
-    lua_pop(L, 2);
+    lua_pop(Lg, 2);
 
-    this->_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    this->_ref = luaL_ref(Lg, LUA_REGISTRYINDEX);
 }
 
 lua::LuaWidget::~LuaWidget() {
+    auto L_lock = this->L.lock();
     if (_ref != LUA_NOREF) {
-        luaL_unref(L, LUA_REGISTRYINDEX, this->_ref);
+        luaL_unref(
+            L_lock.get(), LUA_REGISTRYINDEX, this->_ref);
     }
 }
 
 void lua::LuaWidget::update() {
-    lua_rawgeti(lua::L, LUA_REGISTRYINDEX, this->_ref);
-    lua_getfield(L, -1, "update");
-    lua_call(L, 1, 0);
-    lua_pop(L, lua_gettop(L));
+    auto L_lock = this->L.lock();
+    auto Lg     = L_lock.get();
+    lua_rawgeti(Lg, LUA_REGISTRYINDEX, this->_ref);
+    lua_getfield(Lg, -1, "update");
+    lua_call(Lg, 1, 0);
+    lua_pop(Lg, lua_gettop(Lg));
 }
 
-void lua::LuaWidget::render(
-    Buffer& buf, size_t tick) const {
-    lua_rawgeti(lua::L, LUA_REGISTRYINDEX, this->_ref);
-    lua_getfield(lua::L, -1, "render");
-    lua_pushvalue(lua::L, -2);
+void lua::LuaWidget::render(Buffer& buf) const {
+    auto L_lock = this->L.lock();
+    auto Lg     = L_lock.get();
+    lua_rawgeti(Lg, LUA_REGISTRYINDEX, this->_ref);
+    lua_getfield(Lg, -1, "render");
+    lua_pushvalue(Lg, -2);
 
     BufferRef* ref = static_cast<BufferRef*>(
-        lua_newuserdata(lua::L, sizeof(BufferRef)));
+        lua_newuserdata(Lg, sizeof(BufferRef)));
     ref->ptr = &buf;
-    luaL_getmetatable(lua::L, "BufferRef");
-    lua_setmetatable(lua::L, -2);
+    luaL_getmetatable(Lg, "BufferRef");
+    lua_setmetatable(Lg, -2);
 
-    if (lua_pcall(lua::L, 2, 0, 0) != LUA_OK) {
-        const char* err = lua_tostring(lua::L, -1);
+    if (lua_pcall(Lg, 2, 0, 0) != LUA_OK) {
+        const char* err = lua_tostring(Lg, -1);
         fprintf(stderr, "Lua render() error: %s\n", err);
-        lua_pop(lua::L, 1);
+        lua_pop(Lg, 1);
     }
 
-    lua_pop(lua::L, 1);
+    lua_pop(Lg, 1);
 }
 
 static int _widget_new(lua_State* L) {
@@ -494,7 +501,7 @@ static int _widget_update(lua_State* L) {
     return 0;
 }
 
-static void init_widget_metatable() {
+static void init_widget_metatable(lua_State* L) {
     static const luaL_Reg widget_methods[] = {
         {   "new",    _widget_new},
         {"render", _widget_render},
@@ -535,7 +542,26 @@ static int _state_on_event(lua_State* L) {
     return 0;
 }
 
-void lua::handle_keypress(char keycode) {
+static void init_state_table(lua_State* L) {
+    using namespace lua;
+    lua_createtable(L, 1, 1);
+    lua_pushcfunction(L, _state_on_event);
+    lua_setfield(L, -2, "on_event");
+    lua_setglobal(L, "state");
+}
+
+// ----[state]----
+bool lua::State::should_exit() {
+    lua_getglobal(this->L.get(), "state");
+    lua_getfield(this->L.get(), -1, "exit");
+    bool k = lua_toboolean(this->L.get(), -1);
+
+    lua_pop(this->L.get(), 2);
+
+    return k;
+}
+
+void lua::State::press(char keycode) {
     auto it = _events.find("keypress");
     if (it == _events.end()) {
         exit(1);
@@ -544,51 +570,34 @@ void lua::handle_keypress(char keycode) {
 
     int ref = it->second;
 
-    lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+    lua_rawgeti(this->L.get(), LUA_REGISTRYINDEX, ref);
 
-    // Push the argument (keycode as string)
-    std::string k(
-        1, keycode); // safer way to make 1-char string
-    lua_pushstring(L, k.c_str());
+    std::string k(1, keycode);
+    lua_pushstring(this->L.get(), k.c_str());
 
-    if (lua_pcall(L, 1, 0, 0) != LUA_OK) {
-        const char* err = lua_tostring(L, -1);
+    if (lua_pcall(this->L.get(), 1, 0, 0) != LUA_OK) {
+        const char* err = lua_tostring(this->L.get(), -1);
         fprintf(stderr, "Lua keypress handler error: %s\n",
             err);
-        lua_pop(L, 1); // Pop error
+        lua_pop(this->L.get(), 1);
     }
 }
 
-bool lua::should_exit() {
-    lua_getglobal(L, "state");
-    lua_getfield(L, -1, "exit");
-    bool k = lua_toboolean(L, -1);
-
-    lua_pop(L, 2);
-
-    return k;
-}
-
-static void init_state_table() {
+lua::State::State() {
     using namespace lua;
-    lua_createtable(L, 1, 1);
-    lua_pushcfunction(L, _state_on_event);
-    lua_setfield(L, -2, "on_event");
-    lua_setglobal(L, "state");
-}
+    auto L_ = luaL_newstate();
+    this->L = std::shared_ptr<lua_State>(
+        L_, State::LuaStateDeleter{});
 
-void lua::lua_init() {
-    using namespace lua;
-    L = luaL_newstate();
-    luaL_openlibs(L);
+    luaL_openlibs(L.get());
     // luaL_requiref(L, "base", luaopen_base, true);
     // luaL_requiref(L, "math", luaopen_math, true);
     // luaL_requiref(L, "table", luaopen_table, true);
     // luaL_requiref(L, "package", luaopen_package, true);
     // luaL_requiref(L, "string", luaopen_string, true);
 
-    init_buffer_metatable();
-    init_buffer_ref_metatable();
-    init_widget_metatable();
-    init_state_table();
+    init_buffer_metatable(L.get());
+    init_buffer_ref_metatable(L.get());
+    init_widget_metatable(L.get());
+    init_state_table(L.get());
 };

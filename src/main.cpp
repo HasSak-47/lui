@@ -50,21 +50,18 @@ int main(int argc, char* argv[]) {
     constexpr auto frame_duration = 16.6666ms;
     render::Window win;
 
-    ly::render::lua::lua_init();
-
-    render::lua::LuaWidget root_widget("init.lua");
+    ly::render::lua::State state;
 
     float fps    = 0.;
     size_t frame = 0;
     char cbuf    = 0;
-    while (!ly::render::lua::should_exit()) {
+    while (!state.should_exit()) {
         auto t_start = high_resolution_clock::now();
         printf("\e[0;0H"); // return cursor to 0,0
         if (read(STDIN_FILENO, &cbuf, 1) > 0) {
-            render::lua::handle_keypress(cbuf);
+            state.press(cbuf);
         }
 
-        win.get_buf().render_widget(root_widget);
         win.render();
 
         // frame rate calc

@@ -3,16 +3,12 @@
 
 #include <lua.hpp>
 #include <ly/render/widgets.hpp>
-#include <unordered_map>
 
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <variant>
 
 namespace ly::render::lua {
-
-extern lua_State* L;
 
 class Value {
 public:
@@ -55,11 +51,10 @@ public:
     Value(const Value& other) = default;
     Value(Value&& other)      = default;
 
-    // Assignment operators
     Value& operator=(const Value& other) = default;
     Value& operator=(Value&& other)      = default;
 
-    // Static factory functions
+    // factory functions
     static Value none();
     static Value integer(int64_t val);
     static Value integer(int val);
@@ -78,7 +73,6 @@ public:
     template <typename... Args>
     static Value array(Args&&... args);
 
-    // Type checking
     Ty type() const;
     bool is_none() const;
     bool is_integer() const;
@@ -87,7 +81,6 @@ public:
     bool is_map() const;
     bool is_array() const;
 
-    // Value accessors with type checking
     int64_t as_integer() const;
     double as_float() const;
     const std::string& as_string() const;
@@ -95,20 +88,15 @@ public:
     MapType& as_map();
     const ArrayType& as_array() const;
     ArrayType& as_array();
-
-    // Convenience operators for map access
     Value& operator[](const std::string& key);
     const Value& operator[](const std::string& key) const;
 
-    // Convenience operators for array access
     Value& operator[](size_t index);
     const Value& operator[](size_t index) const;
 
-    // Utility methods
     size_t size() const;
     bool empty() const;
 
-    // Equality operators
     bool operator==(const Value& other) const;
     bool operator!=(const Value& other) const;
 };
@@ -118,41 +106,51 @@ Value Value::array(Args&&... args) {
     return Value(ArrayType{std::forward<Args>(args)...});
 }
 
-void lua_init();
-
-void handle_keypress(char keycode);
-bool should_exit();
+class State;
+class LuaWidget;
 
 class State {
 private:
-    std::unordered_map<std::string, Value> _data = {};
+    struct LuaStateDeleter {
+        void operator()(lua_State* L) const {
+            if (L) {
+                lua_close(L);
+            }
+        }
+    };
+
+    Value _data = Value::map();
+    std::shared_ptr<lua_State> L;
 
 public:
     State();
+
+    void press(char key);
+    bool should_exit();
+
+    LuaWidget from_file(std::string file);
+    void set_data(std::string key, Value val);
+
+    friend class LuaWidget;
 };
 
 class LuaWidget : public widgets::Widget {
 private:
+    std::weak_ptr<lua_State> L;
     int _ref;
 
 protected:
-    LuaWidget(int ref);
-
-    LuaWidget();
+    // takes the table in the stack
+    LuaWidget(std::weak_ptr<lua_State> L);
 
 public:
-    LuaWidget(std::string path);
     ~LuaWidget() override;
 
     void update() override;
-    void render(
-        Buffer& buf, size_t tick = 0) const override;
+    void render(Buffer& buf) const override;
 
-    friend LuaWidget from_table();
+    friend class State;
 };
-
-LuaWidget from_table();
-
 } // namespace ly::render::lua
 
 #endif
