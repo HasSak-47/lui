@@ -66,8 +66,8 @@ return widget:new {
     end,
 
     update = function(this)
-        local tick                     = state.tick
+        local tick                    = state.tick
 
-        this.bars.thousands.percentaje = 0.5;
+        this.bars.hundrets.percentaje = ((tick or 0) % 100) / 100;
     end
 }
