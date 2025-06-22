@@ -15,3 +15,4 @@ test
 /target
 
 .ignore/
+lib/

@@ -1,43 +1,43 @@
-all: compile
+OUT := test
+LIB := lib/libtui.a
 
 SRC_DIR := src
 OBJ_DIR := build
-SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
-OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o,$(SRCS)) $(OUT_RUST_LIB)
-
-OUT := test
+INCLUDE_DIR := include
 
 C := g++
-CFLAGS := -g -shared -I include -c -std=c++23 -MMD -MP -llua
+AR := ar
+CFLAGS := -g -I$(INCLUDE_DIR) -std=c++23 -MMD -MP -c
+LDFLAGS := -llua
+LDOUT := -o $(OUT)
 
-LDFLAGS := -o $(OUT) -llua
+SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
+OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o,$(SRCS))
 
 -include $(OBJS:.o=.d)
 
-compile: $(OUT)
+all: $(OUT) $(LIB)
+
+compile: all
 
 $(OUT): $(OBJS)
-	$(C) $(OBJS) $(LDFLAGS)
+	$(C) $(OBJS) $(LDOUT) $(LDFLAGS)
+
+$(LIB): $(OBJS)
+	@mkdir -p $(dir $@)
+	$(AR) rcs $@ $^
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(C) $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/%:
-	@mkdir -p $(dir $@)
-
-run: compile
+run: $(OUT)
 	./$(OUT)
 
 clean:
-	@for f in $(OBJS); do \
-		echo "Removing $$f"; \
-		rm -rf $$f; \
-	done
+	@rm -rf $(OBJ_DIR) $(OUT) $(LIB)
 
-valgrind: compuie
+valgrind: $(OUT)
 	valgrind ./$(OUT)
 
-
-.PHONY: all clean cmds source valgrind
-
+.PHONY: all compile clean run valgrind
