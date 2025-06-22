@@ -17,7 +17,7 @@ pkg_check_modules(LUA REQUIRED lua5.4)
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${SRC_DIR}/*.cpp")
 
 # Library target
-add_library(tui STATIC ${SOURCES})
+add_library(lui STATIC ${SOURCES})
 target_include_directories(lui PUBLIC ${INCLUDE_DIR} ${LUA_INCLUDE_DIRS})
 target_link_libraries(lui PUBLIC ${LUA_LIBRARIES})
 
