@@ -4,6 +4,7 @@
 
 # Footguns
 * Using printf to enter and exit alternate screen and moving the cursor
+* The interaction between the Value class and lua
 
 # features
 * improve error handling so it just doesn't just crash
