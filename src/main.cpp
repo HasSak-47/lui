@@ -51,17 +51,22 @@ int main(int argc, char* argv[]) {
     render::Window win;
 
     ly::render::lua::State state;
+    auto widget = state.from_file("init.lua");
 
     float fps    = 0.;
     size_t frame = 0;
     char cbuf    = 0;
+
     while (!state.should_exit()) {
         auto t_start = high_resolution_clock::now();
         printf("\e[0;0H"); // return cursor to 0,0
+        fflush(stdout);
+
         if (read(STDIN_FILENO, &cbuf, 1) > 0) {
             state.press(cbuf);
         }
 
+        win.get_buf().render_widget(widget);
         win.render();
 
         // frame rate calc

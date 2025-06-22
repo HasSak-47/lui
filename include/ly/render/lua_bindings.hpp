@@ -1,12 +1,21 @@
 #ifndef __RENDER_LUA_BINDINGS_HPP__
 #define __RENDER_LUA_BINDINGS_HPP__
 
-#include <lua.hpp>
 #include <ly/render/widgets.hpp>
 
+#include <lua.hpp>
+
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <variant>
+
+namespace ly::render::lua {
+class Value;
+}
+
+std::ostream& operator<<(
+    std::ostream& os, const ly::render::lua::Value& val);
 
 namespace ly::render::lua {
 
@@ -14,29 +23,31 @@ class Value {
 public:
     enum class Ty {
         None,
+        Boolean,
         Integer,
         Float,
         String,
         Map,
         Array,
     };
-
-private:
     using MapType = std::unordered_map<std::string, Value>;
     using ArrayType = std::vector<Value>;
 
-    Ty type_;
+private:
+    Ty _type;
     std::variant<std::monostate, // None
         int64_t,                 // Integer
+        bool,                    // bool
         double,                  // Float
         std::string,             // String
         MapType,                 // Map
         ArrayType                // Array
         >
-        data_;
+        _data;
 
     // Private constructors
     Value();
+    Value(bool val);
     Value(int64_t val);
     Value(double val);
     Value(const std::string& val);
@@ -56,6 +67,7 @@ public:
 
     // factory functions
     static Value none();
+    static Value boolean(bool val);
     static Value integer(int64_t val);
     static Value integer(int val);
     static Value float_val(double val);
@@ -76,12 +88,14 @@ public:
     Ty type() const;
     bool is_none() const;
     bool is_integer() const;
+    bool is_boolean() const;
     bool is_float() const;
     bool is_string() const;
     bool is_map() const;
     bool is_array() const;
 
     int64_t as_integer() const;
+    bool as_boolean() const;
     double as_float() const;
     const std::string& as_string() const;
     const MapType& as_map() const;
@@ -99,6 +113,8 @@ public:
 
     bool operator==(const Value& other) const;
     bool operator!=(const Value& other) const;
+    friend std::ostream& ::operator<<(
+        std::ostream& os, const Value& val);
 };
 
 template <typename... Args>
@@ -113,14 +129,13 @@ class State {
 private:
     struct LuaStateDeleter {
         void operator()(lua_State* L) const {
-            if (L) {
+            if (L)
                 lua_close(L);
-            }
         }
     };
 
     Value _data = Value::map();
-    std::shared_ptr<lua_State> L;
+    std::shared_ptr<lua_State> _L;
 
 public:
     State();
@@ -128,15 +143,18 @@ public:
     void press(char key);
     bool should_exit();
 
-    LuaWidget from_file(std::string file);
     void set_data(std::string key, Value val);
+    Value& get_data(std::string key);
+
+    // LuaWidget
+    LuaWidget from_file(std::string file);
 
     friend class LuaWidget;
 };
 
 class LuaWidget : public widgets::Widget {
 private:
-    std::weak_ptr<lua_State> L;
+    std::weak_ptr<lua_State> _L;
     int _ref;
 
 protected:

@@ -12,43 +12,31 @@
 
 ---@alias Color ColorAnsi | Color8bit
 
----@class Unit
----@field chr string
----@field color Color
-
 ---@class Buffer
----@field cell Unit[][]
+---@field set function
 
 ---@class Widget
 ---@field new function
 
----@class Widget
-local Bar = widget:new {
-    render = function(self, buffer)
-        local x, _ = buffer:get_size();
-        buffer:set(1, 1, '[', { type = "bit", r = 1, g = 1, b = 1 })
-        buffer:set(x, 1, ']', { type = "bit", r = 1, g = 1, b = 1 })
-        for i = 2, x - 1, 1 do
-            buffer:set(x, 1, '|', { type = "bit", r = 1, g = 1, b = 1 })
-        end
-    end
-};
-
-local keys = ''
+local letters = ''
 
 state.on_event('keypress', function(key)
     if key == 'q' then
         state.exit = true;
         return
     end
-    keys = keys + key
+    letters = letters .. key
 end)
 
 
+---@class Widget
 return widget:new {
-    render = function(self, buffer)
+    render = function(_, buffer)
         local x, _ = buffer:get_size();
-        Bar:new(buffer:get_sub(0, 0, x, 1));
-        Bar:new(buffer:get_sub(0, 1, x, 1));
+        for ij = 0, string.len(letters) - 1, 1 do
+            local i = 1 + (ij % x);
+            local j = 1 + (ij // x);
+            buffer:set(i, j, letters:sub(ij, ij))
+        end
     end
 }

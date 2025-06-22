@@ -7,10 +7,21 @@
 namespace ly::render::widgets {
 
 class Widget {
+protected:
+    struct Bind {
+        std::shared_ptr<Widget> W;
+        size_t x, y;
+        size_t w, h;
+    };
+
+    std::vector<Bind> _binds;
+    void _update();
+
 public:
     virtual ~Widget() {};
     virtual void update() {};
-    virtual void bind(std::shared_ptr<Widget> w) {}
+    virtual void bind(std::shared_ptr<Widget> W, size_t x,
+        size_t y, size_t w, size_t h) {}
     virtual void render(Buffer& buffer) const = 0;
 };
 

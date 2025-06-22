@@ -27,10 +27,8 @@ Window::Window() : _back(_back_gen()) {
 Window::~Window() {}
 
 void Window::render() {
-    return;
     ConsoleColor last = ConsoleColor::WHITE;
     last.display();
-    char buf[5] = {};
     for (size_t j = 0; j < this->_back.height(); ++j) {
         for (size_t i = 0; i < this->_back.width(); ++i) {
             auto& cur = this->_back.get(i, j);

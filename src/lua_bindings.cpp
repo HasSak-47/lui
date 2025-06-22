@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include <iostream>
 #include <ly/render/buffer.hpp>
 #include <ly/render/lua_bindings.hpp>
 #include <ly/render/widgets.hpp>
@@ -11,39 +12,46 @@
 
 using namespace ly::render;
 
-// ----[value]----
+// ----------[value]----------
 lua::Value::Value()
-    : type_(Ty::None), data_(std::monostate{}) {}
+    : _type(Ty::None), _data(std::monostate{}) {}
 
 lua::Value::Value(int64_t val)
-    : type_(Ty::Integer), data_(val) {}
+    : _type(Ty::Integer), _data(val) {}
+
+lua::Value::Value(bool val)
+    : _type(Ty::Boolean), _data(val) {}
 
 lua::Value::Value(double val)
-    : type_(Ty::Float), data_(val) {}
+    : _type(Ty::Float), _data(val) {}
 
 lua::Value::Value(const std::string& val)
-    : type_(Ty::String), data_(val) {}
+    : _type(Ty::String), _data(val) {}
 
 lua::Value::Value(std::string&& val)
-    : type_(Ty::String), data_(std::move(val)) {}
+    : _type(Ty::String), _data(std::move(val)) {}
 
 lua::Value::Value(const MapType& val)
-    : type_(Ty::Map), data_(val) {}
+    : _type(Ty::Map), _data(val) {}
 
 lua::Value::Value(MapType&& val)
-    : type_(Ty::Map), data_(std::move(val)) {}
+    : _type(Ty::Map), _data(std::move(val)) {}
 
 lua::Value::Value(const ArrayType& val)
-    : type_(Ty::Array), data_(val) {}
+    : _type(Ty::Array), _data(val) {}
 
 lua::Value::Value(ArrayType&& val)
-    : type_(Ty::Array), data_(std::move(val)) {}
+    : _type(Ty::Array), _data(std::move(val)) {}
 
 lua::Value lua::Value::none() {
     return lua::Value();
 }
 
 lua::Value lua::Value::integer(int64_t val) {
+    return lua::Value(val);
+}
+
+lua::Value lua::Value::boolean(bool val) {
     return lua::Value(val);
 }
 
@@ -96,130 +104,158 @@ lua::Value lua::Value::array(ArrayType&& val) {
 }
 
 lua::Value::Ty lua::Value::type() const {
-    return type_;
+    return this->_type;
 }
 
 bool lua::Value::is_none() const {
-    return type_ == Ty::None;
+    return this->_type == Ty::None;
 }
 
 bool lua::Value::is_integer() const {
-    return type_ == Ty::Integer;
+    return this->_type == Ty::Integer;
+}
+
+bool lua::Value::is_boolean() const {
+    return this->_type == Ty::Boolean;
 }
 
 bool lua::Value::is_float() const {
-    return type_ == Ty::Float;
+    return this->_type == Ty::Float;
 }
 
 bool lua::Value::is_string() const {
-    return type_ == Ty::String;
+    return this->_type == Ty::String;
 }
 
 bool lua::Value::is_map() const {
-    return type_ == Ty::Map;
+    return this->_type == Ty::Map;
 }
 
 bool lua::Value::is_array() const {
-    return type_ == Ty::Array;
+    return this->_type == Ty::Array;
 }
 
 int64_t lua::Value::as_integer() const {
-    if (type_ != Ty::Integer) {
+    if (this->_type != Ty::Integer) {
         throw std::runtime_error(
             "lua::Value is not an integer");
     }
-    return std::get<int64_t>(data_);
+    return std::get<int64_t>(_data);
+}
+
+bool lua::Value::as_boolean() const {
+    if (this->_type != Ty::Boolean) {
+        if (this->_type == Ty::None)
+            return false;
+        throw std::runtime_error(
+            "lua::Value is not an boolean");
+    }
+    return std::get<bool>(_data);
 }
 
 double lua::Value::as_float() const {
-    if (type_ != Ty::Float) {
+    if (this->_type != Ty::Float) {
         throw std::runtime_error(
             "lua::Value is not a float");
     }
-    return std::get<double>(data_);
+    return std::get<double>(_data);
 }
 
 const std::string& lua::Value::as_string() const {
-    if (type_ != Ty::String) {
+    if (this->_type != Ty::String) {
         throw std::runtime_error(
             "lua::Value is not a string");
     }
-    return std::get<std::string>(data_);
+    return std::get<std::string>(_data);
 }
 
 const lua::Value::MapType& lua::Value::as_map() const {
-    if (type_ != Ty::Map) {
+    if (this->_type != Ty::Map) {
         throw std::runtime_error("lua::Value is not a map");
     }
-    return std::get<MapType>(data_);
+    return std::get<MapType>(_data);
 }
 
 lua::Value::MapType& lua::Value::as_map() {
-    if (type_ != Ty::Map) {
+    if (this->_type != Ty::Map) {
         throw std::runtime_error("lua::Value is not a map");
     }
-    return std::get<MapType>(data_);
+    return std::get<MapType>(_data);
 }
 
 const lua::Value::ArrayType& lua::Value::as_array() const {
-    if (type_ != Ty::Array) {
+    if (this->_type != Ty::Array) {
         throw std::runtime_error(
             "lua::Value is not an array");
     }
-    return std::get<ArrayType>(data_);
+    return std::get<ArrayType>(_data);
 }
 
 lua::Value::ArrayType& lua::Value::as_array() {
-    if (type_ != Ty::Array) {
+    if (this->_type != Ty::Array) {
         throw std::runtime_error(
             "lua::Value is not an array");
     }
-    return std::get<ArrayType>(data_);
+    return std::get<ArrayType>(_data);
 }
 
 lua::Value& lua::Value::operator[](const std::string& key) {
-    throw std::runtime_error("lua::Value is not a map");
-    std::unreachable();
-    // if (type_ != Ty::Map) {
-    //     throw std::runtime_error("lua::Value is not a
-    //     map");
-    // }
-    // return std::get<MapType>(data_)[key];
+    if (this->_type != Ty::Map) {
+        throw std::runtime_error("lua::Value is not a map");
+    }
+
+    auto& map = std::get<MapType>(_data);
+    auto it   = map.find(key);
+    if (it == map.end()) {
+        auto [it, _ok] =
+            map.insert_or_assign(key, Value::none());
+        return it->second;
+    }
+
+    return it->second;
 }
 
 const lua::Value& lua::Value::operator[](
     const std::string& key) const {
-    if (type_ != Ty::Map) {
+    if (this->_type != Ty::Map) {
         throw std::runtime_error("lua::Value is not a map");
     }
-    return std::get<MapType>(data_).at(key);
+
+    auto& map = std::get<MapType>(this->_data);
+    auto it   = map.find(key);
+    if (it == map.end()) {
+        const static Value _None = Value::none();
+        return _None;
+    }
+
+    return it->second;
 }
 
 lua::Value& lua::Value::operator[](size_t index) {
-    if (type_ != Ty::Array) {
+    if (this->_type != Ty::Array) {
         throw std::runtime_error(
             "lua::Value is not an array");
     }
-    return std::get<ArrayType>(data_)[index];
+    return std::get<ArrayType>(this->_data)[index];
 }
 
 const lua::Value& lua::Value::operator[](
     size_t index) const {
-    if (type_ != Ty::Array) {
+    if (this->_type != Ty::Array) {
         throw std::runtime_error(
             "lua::Value is not an array");
     }
-    return std::get<ArrayType>(data_)[index];
+    return std::get<ArrayType>(this->_data)[index];
 }
 
 size_t lua::Value::size() const {
-    switch (type_) {
+    switch (this->_type) {
     case Ty::Map:
-        return std::get<MapType>(data_).size();
+        return std::get<MapType>(this->_data).size();
     case Ty::Array:
-        return std::get<ArrayType>(data_).size();
+        return std::get<ArrayType>(this->_data).size();
     case Ty::String:
-        return std::get<std::string>(data_).size();
+        return std::get<std::string>(this->_data).size();
     default:
         throw std::runtime_error(
             "lua::Value type does not support size()");
@@ -227,31 +263,180 @@ size_t lua::Value::size() const {
 }
 
 bool lua::Value::empty() const {
-    switch (type_) {
+    switch (_type) {
     case Ty::None:
         return true;
     case Ty::Map:
-        return std::get<MapType>(data_).empty();
+        return std::get<MapType>(this->_data).empty();
     case Ty::Array:
-        return std::get<ArrayType>(data_).empty();
+        return std::get<ArrayType>(this->_data).empty();
     case Ty::String:
-        return std::get<std::string>(data_).empty();
+        return std::get<std::string>(this->_data).empty();
     default:
         return false;
     }
 }
 
 bool lua::Value::operator==(const lua::Value& other) const {
-    if (type_ != other.type_)
+    if (this->_type != other._type)
         return false;
-    return data_ == other.data_;
+    return this->_data == other._data;
 }
 
 bool lua::Value::operator!=(const lua::Value& other) const {
     return !(*this == other);
 }
 
-// ----[buffer]----
+static void _push_value(
+    lua_State* L, const lua::Value& val) {
+    using namespace lua;
+    using Ty = Value::Ty;
+
+    switch (val.type()) {
+    case Ty::None:
+        lua_pushnil(L);
+        break;
+
+    case Ty::Integer:
+        lua_pushinteger(L, val.as_integer());
+        break;
+
+    case Ty::Boolean:
+        lua_pushinteger(L, val.as_boolean());
+        break;
+
+    case Ty::Float:
+        lua_pushnumber(L, val.as_float());
+        break;
+
+    case Ty::String:
+        lua_pushlstring(L, val.as_string().c_str(),
+            val.as_string().size());
+        break;
+
+    case Ty::Map: {
+        lua_newtable(L);
+        for (const auto& [key, v] : val.as_map()) {
+            _push_value(L, v);
+            lua_setfield(L, -2, key.c_str());
+        }
+        break;
+    }
+
+    case Ty::Array: {
+        lua_newtable(L);
+        const auto& arr = val.as_array();
+        for (size_t i = 0; i < arr.size(); ++i) {
+            _push_value(L, arr[i]);
+            lua_rawseti(L, -2,
+                static_cast<int>(
+                    i + 1)); // Lua arrays are 1-based
+        }
+        break;
+    }
+    }
+}
+
+static lua::Value to_value(lua_State* L, int index) {
+    using namespace lua;
+    switch (lua_type(L, index)) {
+    case LUA_TNIL:
+        return Value::none();
+
+    case LUA_TNUMBER:
+        if (lua_isinteger(L, index))
+            return lua::Value::integer(
+                (int64_t)lua_tointeger(L, index));
+        else
+            return lua::Value::float_val(
+                lua_tonumber(L, index));
+
+    case LUA_TBOOLEAN:
+        return Value::boolean(lua_toboolean(L, index));
+
+    case LUA_TSTRING:
+        return Value::string(lua_tostring(L, index));
+
+    case LUA_TTABLE: {
+        Value::MapType map;
+        Value::ArrayType array;
+
+        bool is_array = true;
+        size_t count  = 0;
+
+        lua_pushnil(L);
+        while (lua_next(L, index < 0 ? index - 1 : index) !=
+               0) {
+            ++count;
+
+            if (lua_type(L, -2) == LUA_TSTRING) {
+                is_array = false;
+            }
+            else if (lua_type(L, -2) == LUA_TNUMBER) {
+                if (!lua_isinteger(L, -2))
+                    is_array = false;
+                else {
+                    lua_Integer k = lua_tointeger(L, -2);
+                    if (k !=
+                        static_cast<lua_Integer>(count))
+                        is_array = false;
+                }
+            }
+            else {
+                is_array = false;
+            }
+
+            if (is_array) {
+                array.push_back(to_value(L, -1));
+            }
+            else {
+                std::string key = lua_tostring(L, -2);
+                map.insert_or_assign(key, to_value(L, -1));
+            }
+
+            lua_pop(L, 1); // pop value, keep key
+        }
+
+        return is_array ? Value::array(std::move(array))
+                        : Value::map(std::move(map));
+    }
+
+    default:
+        std::cout << "unknown type" << std::endl;
+        return Value::none(); // Unsupported types are
+                              // treated as None
+    }
+}
+
+std::ostream& operator<<(
+    std::ostream& os, const lua::Value& val) {
+    using Ty = ly::render::lua::Value::Ty;
+    // TODO: finish this match
+    switch (val._type) {
+    case Ty::None:
+        os << "None";
+        break;
+    case Ty::Integer:
+        os << "Integer: " << std::get<int64_t>(val._data);
+        break;
+    case Ty::Boolean:
+        os << "Boolean: " << std::get<bool>(val._data);
+        break;
+    case Ty::Float:
+        os << "Float: " << std::get<double>(val._data);
+        break;
+    case Ty::String:
+        os << "String: "
+           << std::get<std::string>(val._data);
+        break;
+    default:
+        break;
+    }
+
+    return os;
+}
+
+// ----------[buffer]----------
 struct BufferRef {
     Buffer* ptr;
 };
@@ -327,8 +512,7 @@ static int _buffer_set(lua_State* L) {
 
     if (top >= 4 && lua_type(L, 4) == LUA_TSTRING) {
         const char* str = lua_tostring(L, 4);
-        if (str && str[0])
-            unit.chr = str[0];
+        unit.chr        = str[0];
     }
 
     int color_idx =
@@ -402,10 +586,10 @@ static void init_buffer_metatable(lua_State* L) {
     lua_pop(L, 1);
 }
 
-// ----[widget]----
+// ----------[widget]----------
 lua::LuaWidget::LuaWidget(std::weak_ptr<lua_State> L)
-    : L(L) {
-    auto L_locked = this->L.lock();
+    : _L(L) {
+    auto L_locked = this->_L.lock();
     auto Lg       = L_locked.get();
 
     int top = lua_gettop(Lg);
@@ -433,7 +617,7 @@ lua::LuaWidget::LuaWidget(std::weak_ptr<lua_State> L)
 }
 
 lua::LuaWidget::~LuaWidget() {
-    auto L_lock = this->L.lock();
+    auto L_lock = this->_L.lock();
     if (_ref != LUA_NOREF) {
         luaL_unref(
             L_lock.get(), LUA_REGISTRYINDEX, this->_ref);
@@ -441,7 +625,7 @@ lua::LuaWidget::~LuaWidget() {
 }
 
 void lua::LuaWidget::update() {
-    auto L_lock = this->L.lock();
+    auto L_lock = this->_L.lock();
     auto Lg     = L_lock.get();
     lua_rawgeti(Lg, LUA_REGISTRYINDEX, this->_ref);
     lua_getfield(Lg, -1, "update");
@@ -450,7 +634,7 @@ void lua::LuaWidget::update() {
 }
 
 void lua::LuaWidget::render(Buffer& buf) const {
-    auto L_lock = this->L.lock();
+    auto L_lock = this->_L.lock();
     auto Lg     = L_lock.get();
     lua_rawgeti(Lg, LUA_REGISTRYINDEX, this->_ref);
     lua_getfield(Lg, -1, "render");
@@ -522,7 +706,7 @@ static void init_widget_metatable(lua_State* L) {
     lua_setglobal(L, "widget");
 }
 
-// ----[Events]----
+// ----------[events & state]----------
 std::unordered_map<std::string, int> _events = {};
 
 static int _state_on_event(lua_State* L) {
@@ -541,63 +725,111 @@ static int _state_on_event(lua_State* L) {
 
     return 0;
 }
+static int _state_index(lua_State* L) {
+    return 0;
+}
 
-static void init_state_table(lua_State* L) {
+static int _state_newindex(lua_State* L) {
+    auto* state = static_cast<lua::State*>(
+        lua_touserdata(L, lua_upvalueindex(1)));
+    if (!state)
+        return luaL_error(
+            L, "internal error: null state pointer");
+
+    const char* key = lua_tostring(L, 2);
+    if (!key)
+        return luaL_error(
+            L, "__newindex expects a string key");
+
+    auto val             = to_value(L, 3);
+    state->get_data(key) = val;
+
+    return 0;
+}
+
+static void init_state_table(
+    lua::State& cpp_state, lua_State* L) {
     using namespace lua;
-    lua_createtable(L, 1, 1);
+    lua_createtable(L, 0, 1);
+
     lua_pushcfunction(L, _state_on_event);
     lua_setfield(L, -2, "on_event");
+
+    lua_createtable(L, 0, 2);
+
+    lua_pushlightuserdata(L, &cpp_state);
+    lua_pushcclosure(L, _state_index, 1);
+    lua_setfield(L, -2, "__index");
+
+    lua_pushlightuserdata(L, &cpp_state);
+    lua_pushcclosure(L, _state_newindex, 1);
+    lua_setfield(L, -2, "__newindex");
+
+    lua_setmetatable(L, -2);
+
     lua_setglobal(L, "state");
 }
 
-// ----[state]----
 bool lua::State::should_exit() {
-    lua_getglobal(this->L.get(), "state");
-    lua_getfield(this->L.get(), -1, "exit");
-    bool k = lua_toboolean(this->L.get(), -1);
-
-    lua_pop(this->L.get(), 2);
-
-    return k;
+    return this->get_data("exit").as_boolean();
 }
 
 void lua::State::press(char keycode) {
     auto it = _events.find("keypress");
     if (it == _events.end()) {
-        exit(1);
+        throw std::runtime_error("event is not defined");
         return;
     }
 
     int ref = it->second;
 
-    lua_rawgeti(this->L.get(), LUA_REGISTRYINDEX, ref);
+    lua_rawgeti(this->_L.get(), LUA_REGISTRYINDEX, ref);
 
     std::string k(1, keycode);
-    lua_pushstring(this->L.get(), k.c_str());
+    lua_pushstring(this->_L.get(), k.c_str());
 
-    if (lua_pcall(this->L.get(), 1, 0, 0) != LUA_OK) {
-        const char* err = lua_tostring(this->L.get(), -1);
+    if (lua_pcall(this->_L.get(), 1, 0, 0) != LUA_OK) {
+        const char* err = lua_tostring(this->_L.get(), -1);
         fprintf(stderr, "Lua keypress handler error: %s\n",
             err);
-        lua_pop(this->L.get(), 1);
+        lua_pop(this->_L.get(), 1);
     }
+}
+
+void lua::State::set_data(std::string key, Value val) {
+    this->_data[key] = val;
+}
+
+lua::Value& lua::State::get_data(std::string key) {
+    return this->_data[key];
 }
 
 lua::State::State() {
     using namespace lua;
-    auto L_ = luaL_newstate();
-    this->L = std::shared_ptr<lua_State>(
+    auto L_  = luaL_newstate();
+    this->_L = std::shared_ptr<lua_State>(
         L_, State::LuaStateDeleter{});
 
-    luaL_openlibs(L.get());
+    luaL_openlibs(this->_L.get());
     // luaL_requiref(L, "base", luaopen_base, true);
     // luaL_requiref(L, "math", luaopen_math, true);
     // luaL_requiref(L, "table", luaopen_table, true);
     // luaL_requiref(L, "package", luaopen_package, true);
     // luaL_requiref(L, "string", luaopen_string, true);
 
-    init_buffer_metatable(L.get());
-    init_buffer_ref_metatable(L.get());
-    init_widget_metatable(L.get());
-    init_state_table(L.get());
+    init_buffer_metatable(this->_L.get());
+    init_buffer_ref_metatable(this->_L.get());
+    init_widget_metatable(this->_L.get());
+    init_state_table(*this, this->_L.get());
 };
+
+lua::LuaWidget lua::State::from_file(std::string file) {
+    if (luaL_dofile(this->_L.get(), file.c_str()) !=
+        LUA_OK) {
+        throw std::runtime_error(
+            "could not generate widget from script");
+    }
+
+    LuaWidget _widget(this->_L);
+    return _widget;
+}
