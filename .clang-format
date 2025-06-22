@@ -38,7 +38,6 @@ AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: true
 
-# Keep includes grouped and ordered
 SortIncludes: true
 IncludeBlocks: Preserve
 IncludeCategories:
@@ -47,11 +46,9 @@ IncludeCategories:
   - Regex: '^"'
     Priority: 2
 
-# Keep function pointers tidy
 DerivePointerAlignment: false
 SpacesBeforeTrailingComments: 1
 
-# Don't break string literals
 BreakStringLiterals: false
 
 BreakTemplateDeclarations: true

@@ -32,11 +32,6 @@ end)
 ---@class Widget
 return widget:new {
     render = function(_, buffer)
-        local x, _ = buffer:get_size();
-        for ij = 0, string.len(letters) - 1, 1 do
-            local i = 1 + (ij % x);
-            local j = 1 + (ij // x);
-            buffer:set(i, j, letters:sub(ij, ij))
-        end
+        buffer:get_sub(10, 10, 10, 10):render(letters);
     end
 }

@@ -11,13 +11,10 @@
 #include <variant>
 
 namespace ly::render::lua {
-class Value;
-}
 
+class Value;
 std::ostream& operator<<(
     std::ostream& os, const ly::render::lua::Value& val);
-
-namespace ly::render::lua {
 
 class Value {
 public:
@@ -113,7 +110,7 @@ public:
 
     bool operator==(const Value& other) const;
     bool operator!=(const Value& other) const;
-    friend std::ostream& ::operator<<(
+    friend std::ostream& operator<<(
         std::ostream& os, const Value& val);
 };
 
@@ -170,5 +167,4 @@ public:
     friend class State;
 };
 } // namespace ly::render::lua
-
 #endif

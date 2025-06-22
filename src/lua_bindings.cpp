@@ -1,11 +1,8 @@
-#include <cstdio>
-#include <cstdlib>
-
-#include <iostream>
 #include <ly/render/buffer.hpp>
 #include <ly/render/lua_bindings.hpp>
 #include <ly/render/widgets.hpp>
 
+#include <iostream>
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
@@ -408,9 +405,10 @@ static lua::Value to_value(lua_State* L, int index) {
     }
 }
 
-std::ostream& operator<<(
+std::ostream& lua::operator<<(
     std::ostream& os, const lua::Value& val) {
     using Ty = ly::render::lua::Value::Ty;
+
     // TODO: finish this match
     switch (val._type) {
     case Ty::None:
@@ -457,6 +455,33 @@ static int _buffer_get_size(lua_State* L) {
     return 2;
 }
 
+static int _buffer_render(lua_State* L) {
+    void* udata  = lua_touserdata(L, 1);
+    Buffer* data = nullptr;
+
+    if (luaL_testudata(L, 1, "BufferRef")) {
+        data = static_cast<BufferRef*>(udata)->ptr;
+    }
+    else {
+        data = static_cast<Buffer*>(udata);
+    }
+
+    if (lua_isuserdata(L, 2)) {
+        // TODO: handle userdata
+        std::cout << "userdata not handled yet";
+        return 0;
+    }
+    if (lua_istable(L, 2)) {
+        // TODO: handle tables
+        std::cout << "tables not handled yet";
+        return 0;
+    }
+    lua::Value val = to_value(L, 2);
+    data->render_widget(val);
+
+    return 0;
+}
+
 static int _buffer_get_sub(lua_State* L) {
     void* udata    = lua_touserdata(L, 1);
     Buffer* parent = nullptr;
@@ -468,10 +493,10 @@ static int _buffer_get_sub(lua_State* L) {
         parent = static_cast<Buffer*>(udata);
     }
 
-    size_t x = luaL_checkinteger(L, 2);
-    size_t y = luaL_checkinteger(L, 3);
-    size_t w = luaL_checkinteger(L, 4);
-    size_t h = luaL_checkinteger(L, 5);
+    size_t x = luaL_checkinteger(L, 2) - 1;
+    size_t y = luaL_checkinteger(L, 3) - 1;
+    size_t w = luaL_checkinteger(L, 4) - 1;
+    size_t h = luaL_checkinteger(L, 5) - 1;
 
     Buffer sub = parent->get_sub_buffer(x, y, w, h);
 
@@ -559,6 +584,9 @@ static void init_buffer_ref_metatable(lua_State* L) {
     lua_pushcfunction(L, _buffer_get_sub);
     lua_setfield(L, -2, "get_sub");
 
+    lua_pushcfunction(L, _buffer_render);
+    lua_setfield(L, -2, "render");
+
     lua_pushvalue(L, -1);
     lua_setfield(L, -2, "__index");
 
@@ -576,6 +604,9 @@ static void init_buffer_metatable(lua_State* L) {
 
     lua_pushcfunction(L, _buffer_get_sub);
     lua_setfield(L, -2, "get_sub");
+
+    lua_pushcfunction(L, _buffer_render);
+    lua_setfield(L, -2, "render");
 
     lua_pushcfunction(L, _buffer_gc);
     lua_setfield(L, -2, "__gc");

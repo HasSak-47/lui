@@ -9,6 +9,7 @@
 #include <sstream>
 #include <vector>
 
+// std::ostream shenanigans
 namespace ly::render {
 class Buffer;
 }
@@ -71,13 +72,12 @@ struct Unit {
     Unit();
 };
 
-class Buffer;
 void render(Buffer& buf);
 
 template <typename T>
 concept OstreamFormattable =
-    requires(std::ostream& os, const T& widget) {
-        { os << widget } -> std::same_as<std::ostream&>;
+    requires(std::ostream& os, const T& val) {
+        { os << val } -> std::same_as<std::ostream&>;
     };
 
 template <typename T>
@@ -123,8 +123,8 @@ public:
     void render_widget(const T& widget) {
         std::ostringstream ss;
         ss << widget;
-        auto s     = ss.str();
-        size_t idx = 0;
+        std::string s = ss.str();
+        size_t idx    = 0;
         for (const auto& c : s) {
             size_t i = idx % this->_w;
             size_t j = idx / this->_w;

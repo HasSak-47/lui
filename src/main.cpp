@@ -56,9 +56,12 @@ int main(int argc, char* argv[]) {
     float fps    = 0.;
     size_t frame = 0;
     char cbuf    = 0;
+    auto val     = render::lua::Value::float_val(10.);
 
     while (!state.should_exit()) {
+
         auto t_start = high_resolution_clock::now();
+
         printf("\e[0;0H"); // return cursor to 0,0
         fflush(stdout);
 
