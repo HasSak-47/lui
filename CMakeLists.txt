@@ -1,6 +1,6 @@
 
 cmake_minimum_required(VERSION 3.20)
-project(tui_buffer LANGUAGES CXX)
+project(lui LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,12 +18,12 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${SRC_DIR}/*.cpp")
 
 # Library target
 add_library(tui STATIC ${SOURCES})
-target_include_directories(tui PUBLIC ${INCLUDE_DIR} ${LUA_INCLUDE_DIRS})
-target_link_libraries(tui PUBLIC ${LUA_LIBRARIES})
+target_include_directories(lui PUBLIC ${INCLUDE_DIR} ${LUA_INCLUDE_DIRS})
+target_link_libraries(lui PUBLIC ${LUA_LIBRARIES})
 
 # Executable (test)
 add_executable(test ${SRC_DIR}/main.cpp)
-target_link_libraries(test PRIVATE tui)
+target_link_libraries(test PRIVATE lui)
 
 # Output paths
-set_target_properties(tui PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set_target_properties(lui PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

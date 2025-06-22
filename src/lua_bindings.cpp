@@ -204,8 +204,12 @@ lua::Value& lua::Value::operator[](const std::string& key) {
     auto& map = std::get<MapType>(_data);
     auto it   = map.find(key);
     if (it == map.end()) {
-        auto [it, _ok] =
+        auto [it, ok] =
             map.insert_or_assign(key, Value::none());
+        if (!ok) {
+            throw std::runtime_error(
+                "failed to update state");
+        }
         return it->second;
     }
 
@@ -399,7 +403,7 @@ static lua::Value to_value(lua_State* L, int index) {
     }
 
     default:
-        std::cout << "unknown type" << std::endl;
+        std::cerr << "unknown type" << std::endl;
         return Value::none(); // Unsupported types are
                               // treated as None
     }
@@ -409,23 +413,32 @@ std::ostream& lua::operator<<(
     std::ostream& os, const lua::Value& val) {
     using Ty = ly::render::lua::Value::Ty;
 
+    bool show_type = false;
+
     // TODO: finish this match
     switch (val._type) {
     case Ty::None:
-        os << "None";
+        os << (show_type ? "None" : "");
         break;
     case Ty::Integer:
-        os << "Integer: " << std::get<int64_t>(val._data);
+        if (show_type)
+            os << "Integer: ";
+        os << std::get<int64_t>(val._data);
         break;
     case Ty::Boolean:
-        os << "Boolean: " << std::get<bool>(val._data);
+        if (show_type)
+            os << "Boolean: ";
+        os << std::boolalpha << std::get<bool>(val._data);
         break;
     case Ty::Float:
-        os << "Float: " << std::get<double>(val._data);
+        if (show_type)
+            os << "Float: ";
+        os << std::get<double>(val._data);
         break;
     case Ty::String:
-        os << "String: "
-           << std::get<std::string>(val._data);
+        if (show_type)
+            os << "String: ";
+        os << std::get<std::string>(val._data);
         break;
     default:
         break;
@@ -468,12 +481,12 @@ static int _buffer_render(lua_State* L) {
 
     if (lua_isuserdata(L, 2)) {
         // TODO: handle userdata
-        std::cout << "userdata not handled yet";
+        std::cerr << "userdata not handled yet";
         return 0;
     }
     if (lua_istable(L, 2)) {
         // TODO: handle tables
-        std::cout << "tables not handled yet";
+        std::cerr << "tables not handled yet";
         return 0;
     }
     lua::Value val = to_value(L, 2);
@@ -492,11 +505,12 @@ static int _buffer_get_sub(lua_State* L) {
     else {
         parent = static_cast<Buffer*>(udata);
     }
-
+    // this are indices
     size_t x = luaL_checkinteger(L, 2) - 1;
     size_t y = luaL_checkinteger(L, 3) - 1;
-    size_t w = luaL_checkinteger(L, 4) - 1;
-    size_t h = luaL_checkinteger(L, 5) - 1;
+    // this are dimentions
+    size_t w = luaL_checkinteger(L, 4);
+    size_t h = luaL_checkinteger(L, 5);
 
     Buffer sub = parent->get_sub_buffer(x, y, w, h);
 
@@ -660,6 +674,7 @@ void lua::LuaWidget::update() {
     auto Lg     = L_lock.get();
     lua_rawgeti(Lg, LUA_REGISTRYINDEX, this->_ref);
     lua_getfield(Lg, -1, "update");
+    lua_pushvalue(Lg, -2);
     lua_call(Lg, 1, 0);
     lua_pop(Lg, lua_gettop(Lg));
 }
@@ -757,7 +772,19 @@ static int _state_on_event(lua_State* L) {
     return 0;
 }
 static int _state_index(lua_State* L) {
-    return 0;
+    auto* state = static_cast<lua::State*>(
+        lua_touserdata(L, lua_upvalueindex(1)));
+    if (!state)
+        return luaL_error(
+            L, "internal error: null state pointer");
+
+    const char* key = lua_tostring(L, 2);
+    if (!key)
+        return luaL_error(
+            L, "__index expects a string key");
+
+    _push_value(L, state->get_data(key));
+    return 1;
 }
 
 static int _state_newindex(lua_State* L) {
