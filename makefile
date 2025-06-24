@@ -5,7 +5,7 @@ SRC_DIR := src
 BUILD_DIR := build
 INCLUDE_DIR := include
 
-C := g++
+C := ccache g++
 AR := ar
 CFLAGS := -g -I$(INCLUDE_DIR) -std=c++23 -MMD -MP -c
 LDFLAGS := -llua
