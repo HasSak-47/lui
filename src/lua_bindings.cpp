@@ -1,10 +1,9 @@
 #include <cstdio>
-#include <lua.h>
+
+#include <ly/exceptions.hpp>
 #include <ly/render/buffer.hpp>
 #include <ly/render/lua_bindings.hpp>
 #include <ly/render/widgets.hpp>
-
-#include <ly/exceptions.hpp>
 
 #include <iostream>
 #include <stdexcept>
