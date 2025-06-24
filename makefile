@@ -1,45 +1,65 @@
+# Output binary and static library
 OUT := test
 LIB := lib/libtui.a
 
+# Directories
 SRC_DIR := src
 BUILD_DIR := build
 INCLUDE_DIR := include
 
+# Tools and flags
 C := ccache g++
 AR := ar
-CFLAGS := -g -I$(INCLUDE_DIR) -std=c++23 -MMD -MP -c
+CFLAGS := -g -I"$(INCLUDE_DIR)" -std=c++23 -MMD -MP -c
 LDFLAGS := -llua
-LDOUT := -o $(OUT)
+LDOUT := -o "$(OUT)"
 
+# Source file collection
 SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
-OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRCS))
+MAIN_SRC := $(SRC_DIR)/main.cpp
+LIB_SRCS := $(filter-out $(MAIN_SRC), $(SRCS))
 
--include $(OBJS:.o=.d)
+# Object file mappings
+MAIN_OBJ := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(MAIN_SRC))
+LIB_OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(LIB_SRCS))
 
-.PHONY: all compile clean run valgrind build
+# Dependency includes
+-include $(LIB_OBJS:.o=.d) $(MAIN_OBJ:.o=.d)
 
+# Phony targets
+.PHONY: all build compile clean run valgrind libonly
+
+# Default build
 all: $(OUT) $(LIB)
 
 build: all
-
 compile: all
 
-$(OUT): $(OBJS)
-	$(C) $(OBJS) $(LDOUT) $(LDFLAGS)
+# Final binary links main.o + library objects
+$(OUT): $(LIB_OBJS) $(MAIN_OBJ)
+	$(C) $(LIB_OBJS) $(MAIN_OBJ) $(LDOUT) $(LDFLAGS)
 
-$(LIB): $(OBJS)
-	@mkdir -p $(dir $@)
-	$(AR) rcs $@ $^
+# Static library: only non-main objects
+$(LIB): $(LIB_OBJS)
+	@mkdir -p "$(dir $@)"
+	$(AR) rcs "$@" $^
 
+# Compile rule for object files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(dir $@)
+	@mkdir -p "$(dir $@)"
 	$(C) $(CFLAGS) $< -o $@
 
+# Run the binary
 run: $(OUT)
 	./$(OUT)
 
-clean:
-	@rm -rf $(BUILD_DIR) $(OUT) $(LIB)
-
+# Run with Valgrind
 valgrind: $(OUT)
 	valgrind ./$(OUT)
+
+# Build only the library (no binary)
+libonly: $(LIB)
+
+# Cleanup
+clean:
+	@rm -rf "$(BUILD_DIR)" "$(OUT)" "$(LIB)"
