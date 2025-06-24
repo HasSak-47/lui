@@ -16,8 +16,24 @@
 
 int main(int argc, char* argv[]) {
     using namespace std::chrono;
-    using namespace ly;
+    using namespace ly::render;
 
+    Buffer buf(10, 10);
+    for (size_t j = 0; j < 10; ++j) {
+        auto sub = buf.get_sub_buffer(0, j, 10, 1);
+        for (size_t i = 0; i < 10 - j; ++i) {
+            sub.get(i + j, 0).chr = j + i + '0';
+        }
+    }
+
+    for (size_t y = 0; y < buf.height(); ++y) {
+        for (size_t x = 0; x < buf.width(); ++x) {
+            std::cout << (char)buf.get(x, y).chr;
+        }
+        std::cout << '\n';
+    }
+
+    /*
     constexpr auto tick_duration = 20ms;
     render::Window win;
 
@@ -69,5 +85,6 @@ int main(int argc, char* argv[]) {
 
     ly::render::unset_raw_mode();
     ly::render::leave_alternate_screen();
+    */
     return 0;
 }
