@@ -89,16 +89,20 @@ concept Renderable =
 class Buffer {
 private:
     using _Buffer =
-        std::vector<std::vector<std::shared_ptr<Unit>>>;
+        std::shared_ptr<std::vector<std::vector<Unit>>>;
     _Buffer _data;
+    size_t _x, _y;
     size_t _w, _h;
 
-    Buffer(size_t w, size_t h, _Buffer buf);
+    Buffer(size_t x, size_t y, size_t w, size_t h,
+        _Buffer buf);
 
 public:
     Buffer(size_t w, size_t h);
     Buffer(const Buffer& other);
     Buffer(Buffer&& other);
+
+    Buffer& operator=(const Buffer& other);
     Buffer& operator=(Buffer&& other);
 
     ~Buffer();
