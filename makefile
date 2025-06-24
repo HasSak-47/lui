@@ -10,7 +10,7 @@ INCLUDE_DIR := include
 # Tools and flags
 C := ccache g++
 AR := ar
-CFLAGS := -g -O2 -I"$(INCLUDE_DIR)" -std=c++23 -MMD -MP -c
+CFLAGS := -g -pg -O2 -I"$(INCLUDE_DIR)" -std=c++23 -MMD -MP -c
 LDFLAGS := -llua
 LDOUT := -o "$(OUT)"
 
