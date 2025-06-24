@@ -41,12 +41,6 @@ int main(int argc, char* argv[]) {
     using namespace std::chrono;
     using namespace ly;
 
-    printf("\e[?1049h"); // enter alternate screen
-    printf("\e[0;0H");   // move cursor to 0
-    printf("\e[?25l");   // hide cursor
-    fflush(stdout);
-    set_raw_mode();
-
     constexpr auto tick_duration = 16.6666ms;
     render::Window win;
 
@@ -56,6 +50,12 @@ int main(int argc, char* argv[]) {
     size_t tick = 0;
     char cbuf   = 0;
     auto val    = render::lua::Value::float_val(10.);
+
+    printf("\e[?1049h"); // enter alternate screen
+    printf("\e[0;0H");   // move cursor to 0
+    printf("\e[?25l");   // hide cursor
+    fflush(stdout);
+    set_raw_mode();
 
     while (!state.should_exit()) {
         auto t_start = high_resolution_clock::now();

@@ -1,6 +1,9 @@
+#include <cstdio>
 #include <ly/render/buffer.hpp>
 #include <ly/render/lua_bindings.hpp>
 #include <ly/render/widgets.hpp>
+
+#include <ly/exceptions.hpp>
 
 #include <iostream>
 #include <stdexcept>
@@ -168,14 +171,14 @@ const std::string& lua::Value::as_string() const {
 
 const lua::Value::MapType& lua::Value::as_map() const {
     if (this->_type != Ty::Map) {
-        throw std::runtime_error("lua::Value is not a map");
+        LY_THROW("lua::Value is not a map");
     }
     return std::get<MapType>(_data);
 }
 
 lua::Value::MapType& lua::Value::as_map() {
     if (this->_type != Ty::Map) {
-        throw std::runtime_error("lua::Value is not a map");
+        LY_THROW("lua::Value is not a map");
     }
     return std::get<MapType>(_data);
 }
@@ -198,7 +201,7 @@ lua::Value::ArrayType& lua::Value::as_array() {
 
 lua::Value& lua::Value::operator[](const std::string& key) {
     if (this->_type != Ty::Map) {
-        throw std::runtime_error("lua::Value is not a map");
+        LY_THROW("lua::Value is not a map");
     }
 
     auto& map = std::get<MapType>(_data);
@@ -219,7 +222,7 @@ lua::Value& lua::Value::operator[](const std::string& key) {
 const lua::Value& lua::Value::operator[](
     const std::string& key) const {
     if (this->_type != Ty::Map) {
-        throw std::runtime_error("lua::Value is not a map");
+        LY_THROW("lua::Value is not a map");
     }
 
     auto& map = std::get<MapType>(this->_data);
@@ -403,7 +406,6 @@ static lua::Value to_value(lua_State* L, int index) {
     }
 
     default:
-        std::cerr << "unknown type" << std::endl;
         return Value::none(); // Unsupported types are
                               // treated as None
     }
@@ -541,7 +543,7 @@ static int _buffer_set(lua_State* L) {
     }
 
     if (!data)
-        throw std::runtime_error("Buffer is null");
+        LY_THROW("Buffer is null");
 
     size_t x   = lua_tointeger(L, 2) - 1;
     size_t y   = lua_tointeger(L, 3) - 1;
@@ -639,24 +641,15 @@ lua::LuaWidget::LuaWidget(std::weak_ptr<lua_State> L)
 
     int top = lua_gettop(Lg);
     if (top == 0)
-        throw std::runtime_error("no widget returned");
+        LY_THROW("no widget returned");
 
     if (!lua_istable(Lg, -1) && !lua_isuserdata(Lg, -1))
-        throw std::runtime_error(
-            "returned value is not table/userdata");
+        LY_THROW("returned value is not table/userdata");
 
     if (!lua_getmetatable(Lg, -1))
-        throw std::runtime_error("widget has no metatable");
+        LY_THROW("widget has no metatable");
 
-    luaL_getmetatable(Lg, "Widget");
-
-    if (!lua_rawequal(Lg, -1, -2)) {
-        lua_pop(Lg, 3);
-        throw std::runtime_error(
-            "widget metatable mismatch");
-    }
-
-    lua_pop(Lg, 2);
+    lua_pop(Lg, 1);
 
     this->_ref = luaL_ref(Lg, LUA_REGISTRYINDEX);
 }
@@ -694,45 +687,57 @@ void lua::LuaWidget::render(Buffer& buf) const {
 
     if (lua_pcall(Lg, 2, 0, 0) != LUA_OK) {
         const char* err = lua_tostring(Lg, -1);
-        fprintf(stderr, "Lua render() error: %s\n", err);
-        lua_pop(Lg, 1);
+        std::cerr << "Lua error: "
+                  << (err ? err : "(unknown error)")
+                  << std::endl;
+        lua_pop(Lg, 1); // remove error message
     }
 
     lua_pop(Lg, 1);
 }
 
-static int _widget_new(lua_State* L) {
-    size_t size = lua_gettop(L);
-    switch (size) {
-    case 0:
-        lua_createtable(L, 0, 0);
-        break;
-    case 1:
-        if (!lua_istable(L, 1)) {
-            luaL_error(L,
-                "widget.new expects a table or no arguments");
-        }
-        break;
-    }
+// params self, table
+static int _widget_extend(lua_State* L) {
+    lua_pushvalue(L, -1);
+    lua_setfield(L, -2, "__index");
 
-    luaL_getmetatable(L, "Widget");
+    lua_pushvalue(L, -2);
+    lua_setfield(L, -2, "super");
+
+    lua_pushvalue(L, -2);
     lua_setmetatable(L, -2);
 
     return 1;
 }
 
+static int _widget_new(lua_State* L) {
+    lua_settop(L, 1);
+    luaL_checktype(L, 1, LUA_TTABLE);
+
+    lua_newtable(L);
+    lua_pushvalue(L, 1);
+    lua_setmetatable(L, -2);
+
+    lua_pushstring(L, "Widget");
+    lua_setfield(L, -2, "_type");
+
+    lua_pushnumber(L, 1.0);
+    lua_setfield(L, -2, "_version");
+
+    return 1;
+}
+
 static int _widget_render(lua_State* L) {
-    // empty by default
     return 0;
 }
 
 static int _widget_update(lua_State* L) {
-    // empty by default
     return 0;
 }
 
 static void init_widget_metatable(lua_State* L) {
     static const luaL_Reg widget_methods[] = {
+        {"extend", _widget_extend},
         {   "new",    _widget_new},
         {"render", _widget_render},
         {"update", _widget_update},
@@ -835,7 +840,7 @@ bool lua::State::should_exit() {
 void lua::State::press(char keycode) {
     auto it = _events.find("keypress");
     if (it == _events.end()) {
-        throw std::runtime_error("event is not defined");
+        LY_THROW("event is not defined");
         return;
     }
 
@@ -882,12 +887,56 @@ lua::State::State() {
 };
 
 lua::LuaWidget lua::State::from_file(std::string file) {
-    if (luaL_dofile(this->_L.get(), file.c_str()) !=
-        LUA_OK) {
-        throw std::runtime_error(
-            "could not generate widget from script");
+    lua_State* L = this->_L.get();
+
+    if (luaL_dofile(L, file.c_str()) != LUA_OK) {
+        const char* err =
+            lua_tostring(L, -1); // get error message
+        std::string message =
+            "could not generate widget from script: ";
+        message += (err ? err : "unknown error");
+        lua_pop(
+            L, 1); // remove error message from the stack
+        LY_THROW(message);
     }
 
     LuaWidget _widget(this->_L);
     return _widget;
+}
+
+void lua::LuaWidget::debug_print() const {
+    auto L_lock = this->_L.lock();
+    auto Lg     = L_lock.get();
+
+    lua_rawgeti(Lg, LUA_REGISTRYINDEX,
+        this->_ref); // Push the widget table
+
+    std::printf(
+        "LuaWidget table at: %p\n", lua_topointer(Lg, -1));
+
+    lua_pushnil(Lg); // Start table iteration
+
+    while (lua_next(Lg, -2)) {
+        // Key at -2, value at -1
+
+        // Print key
+        std::string keyStr;
+        if (lua_type(Lg, -2) == LUA_TSTRING)
+            keyStr = lua_tostring(Lg, -2);
+        else
+            keyStr = luaL_typename(Lg, -2);
+
+        // Print value address
+        const void* addr    = lua_topointer(Lg, -1);
+        const char* valType = luaL_typename(Lg, -1);
+
+        std::cout << "  [" << keyStr.c_str() << "] ("
+                  << valType << ") => " << addr << '\n';
+
+        lua_pop(Lg,
+            1); // Remove value, keep key for next
+                // iteration
+    }
+
+    lua_pop(Lg, 1); // Pop table
 }
