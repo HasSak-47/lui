@@ -704,10 +704,12 @@ static int _widget_extend(lua_State* L) {
 }
 
 static int _widget_new(lua_State* L) {
-    lua_settop(L, 1);
     luaL_checktype(L, 1, LUA_TTABLE);
+    size_t top = lua_gettop(L);
+    if (top < 2) {
+        lua_createtable(L, 0, 0);
+    }
 
-    lua_newtable(L);
     lua_pushvalue(L, 1);
     lua_setmetatable(L, -2);
 
