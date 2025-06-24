@@ -18,6 +18,9 @@ public:
     Buffer& get_buf() { return this->_back; }
 
     void render();
+    // resizes the window if it is necessary
+    void resize();
+
     const size_t width() const { return this->_width; }
     const size_t height() const { return this->_height; }
 };
