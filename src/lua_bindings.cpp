@@ -6,7 +6,6 @@
 #include <ly/render/widgets.hpp>
 
 #include <iostream>
-#include <stdexcept>
 #include <unordered_map>
 #include <utility>
 
