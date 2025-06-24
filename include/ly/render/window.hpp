@@ -8,6 +8,9 @@ namespace ly::render {
 
 class Window {
     Buffer _front;
+    // TODO: there are possible gains for using the back to
+    // check if there character should be there or not, and
+    // just not render it and just render the differences
     Buffer _back;
     size_t _width, _height;
 

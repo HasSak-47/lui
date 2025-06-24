@@ -134,11 +134,8 @@ public:
         for (const auto& c : s) {
             size_t i = idx % this->_w;
             size_t j = idx / this->_w;
-            if (i >= this->_w) {
-                continue;
-            }
             if (j >= this->_h) {
-                continue;
+                break;
             }
 
             this->get(i, j).chr = c;
