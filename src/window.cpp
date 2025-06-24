@@ -41,32 +41,19 @@ void Window::render() {
     for (size_t y = 0; y < _back.height(); ++y) {
         for (size_t x = 0; x < _back.width(); ++x) {
             auto& cur = _back.get(x, y);
-            auto& old = _front.get(x, y);
-
-            if (cur.chr != old.chr || cur.col != old.col) {
-                // move cursor
-                printf("\033[%zu;%zuH", y + 1, x + 1);
-
-                // update color if needed
-                if (cur.col != last) {
-                    last = cur.col;
-                    last.display();
-                }
-
-                // print character
-                printf("%lc", cur.chr);
+            // update color if needed
+            if (cur.col != last) {
+                last = cur.col;
+                last.display();
             }
 
-            // prepare next frame in _front
-            old     = cur;
-            cur.chr = ' ';
+            printf("%lc", cur.chr);
             cur.col = ConsoleColor::WHITE;
         }
     }
 
-    // reset color
-    printf("\e[38;2;%d;%d;%dm", 255, 255, 255);
-    fflush(stdout);
+    last = ConsoleColor::WHITE;
+    last.display();
 }
 
 Buffer Window::get_subbuf(
