@@ -18,12 +18,13 @@ int main(int argc, char* argv[]) {
     using namespace std::chrono;
     using namespace ly;
 
-    constexpr auto tick_duration = 16.6666ms;
+    constexpr auto tick_duration = 20ms;
     render::Window win;
 
     ly::render::lua::State state;
     auto widget = state.from_file("init.lua");
 
+    float fps   = 0;
     size_t tick = 0;
     char cbuf   = 0;
     auto val    = render::lua::Value::float_val(10.);
@@ -32,6 +33,11 @@ int main(int argc, char* argv[]) {
 
     while (!state.should_exit()) {
         auto t_start = high_resolution_clock::now();
+
+        state.set_data("tick",
+            render::lua::Value::integer((int64_t)tick));
+        state.set_data("fps",
+            render::lua::Value::float_val((double)fps));
 
         printf("\e[0;0H"); // return cursor to 0,0
         fflush(stdout);
@@ -57,12 +63,8 @@ int main(int argc, char* argv[]) {
         auto t_end = high_resolution_clock::now();
         auto total_elapsed =
             duration_cast<milliseconds>(t_end - t_start);
-        float fps = 1000.0 / total_elapsed.count();
+        fps = 1000.0 / total_elapsed.count();
         tick++;
-        state.set_data("tick",
-            render::lua::Value::integer((int64_t)tick));
-        state.set_data("fps",
-            render::lua::Value::float_val((double)fps));
     }
 
     ly::render::unset_raw_mode();
