@@ -79,12 +79,14 @@ Buffer::Buffer(size_t w, size_t h)
 }
 
 Buffer::Buffer(const Buffer& other)
-    : _w(other._w), _h(other._h) {
+    : _x(other._x), _y(other._y), _w(other._w),
+      _h(other._h) {
     this->_data = other._data;
 }
 
 Buffer::Buffer(Buffer&& other)
-    : _w(other._w), _h(other._h) {
+    : _x(other._x), _y(other._y), _w(other._w),
+      _h(other._h) {
     this->_data = std::move(other._data);
 }
 
@@ -104,7 +106,6 @@ Buffer& Buffer::operator=(Buffer&& other) {
     this->_y    = other._y;
     this->_h    = other._h;
     this->_w    = other._w;
-
     return *this;
 }
 
@@ -113,6 +114,18 @@ Buffer Buffer::get_sub_buffer(
 
     return Buffer(
         this->_x + x, this->_y + y, w, h, this->_data);
+}
+
+Unit& Buffer::get(size_t x, size_t y) const {
+    x += this->_x;
+    y += this->_y;
+
+    if (x >= (*_data).size())
+        x = (*_data).size() - 1;
+    if (y >= (*_data)[x].size())
+        y = (*_data)[x].size() - 1;
+
+    return (*this->_data)[x][y];
 }
 
 Unit& Buffer::get(size_t x, size_t y) {
@@ -131,7 +144,7 @@ std::ostream& operator<<(
     std::ostream& os, const Buffer& buf) {
     for (size_t j = 0; j < buf._h; ++j) {
         for (size_t i = 0; i < buf._w; ++i) {
-            os << (char)(*buf._data)[i][j].chr;
+            os << (char)buf.get(i, j).chr;
         }
         os << '\n';
     }

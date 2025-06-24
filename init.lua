@@ -82,10 +82,6 @@ local M_type = widget:extend {
     render = function(this, buffer)
         buffer:get_sub(1, 1, 10, 1):render('fps : ' .. state.fps);
         buffer:get_sub(1, 2, 10, 1):render('tick: ' .. state.tick);
-        this.bars.hundrets.show_number = true
-        this.bars.thousands.show_number = true
-        this.bars.hundrets:render(buffer:get_sub(1, 3, 50, 1))
-        this.bars.thousands:render(buffer:get_sub(1, 4, 50, 1))
     end,
 
     update = function(this)

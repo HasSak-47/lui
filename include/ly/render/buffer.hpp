@@ -111,6 +111,7 @@ public:
         size_t x, size_t y, size_t w, size_t h);
 
     Unit& get(size_t x, size_t y);
+    Unit& get(size_t x, size_t y) const;
     friend std::ostream& ::operator<<(
         std::ostream& other, const Buffer& buf);
 
