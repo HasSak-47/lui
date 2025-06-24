@@ -295,7 +295,7 @@ static void _push_value(
         break;
 
     case Ty::Boolean:
-        lua_pushinteger(L, val.as_boolean());
+        lua_pushboolean(L, val.as_boolean());
         break;
 
     case Ty::Float:
@@ -781,7 +781,8 @@ static int _state_index(lua_State* L) {
         return luaL_error(
             L, "__index expects a string key");
 
-    _push_value(L, state->get_data(key));
+    auto val = state->get_data(key);
+    _push_value(L, val);
     return 1;
 }
 
@@ -797,8 +798,8 @@ static int _state_newindex(lua_State* L) {
         return luaL_error(
             L, "__newindex expects a string key");
 
-    auto val             = to_value(L, 3);
-    state->get_data(key) = val;
+    auto val = to_value(L, 3);
+    state->set_data(key, val);
 
     return 0;
 }
@@ -856,8 +857,10 @@ void lua::State::set_data(std::string key, Value val) {
     this->_data[key] = val;
 }
 
-lua::Value& lua::State::get_data(std::string key) {
-    return this->_data[key];
+const lua::Value& lua::State::get_data(
+    std::string key) const {
+    auto& val = this->_data[key];
+    return val;
 }
 
 lua::State::State() {

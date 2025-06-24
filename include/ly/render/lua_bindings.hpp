@@ -141,7 +141,7 @@ public:
     bool should_exit();
 
     void set_data(std::string key, Value val);
-    Value& get_data(std::string key);
+    const Value& get_data(std::string key) const;
 
     // LuaWidget
     LuaWidget from_file(std::string file);

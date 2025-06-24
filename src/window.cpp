@@ -49,6 +49,7 @@ void Window::render() {
 
             printf("%lc", cur.chr);
             cur.col = ConsoleColor::WHITE;
+            cur.chr = ' ';
         }
     }
 
