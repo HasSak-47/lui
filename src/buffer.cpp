@@ -108,6 +108,13 @@ Buffer::Buffer(Buffer&& other)
     this->_data = std::move(other._data);
 }
 
+Buffer& Buffer::operator=(Buffer&& other) {
+    this->_h    = other._h;
+    this->_w    = other._w;
+    this->_data = std::move(other._data);
+    return *this;
+}
+
 Buffer Buffer::get_sub_buffer(
     size_t x, size_t y, size_t w, size_t h) {
     auto buf = init_buffer(w, h, [&](size_t i, size_t j) {

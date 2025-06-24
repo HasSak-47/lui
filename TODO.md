@@ -4,12 +4,13 @@
 
 # features
 * improve error handling so it just doesn't just crash
-* export a enter and exit tui mode function
+    * add a warning and error widget
 * utf-8 characters
 * improve lua lsp support
 * widgets
     * add back some widgets to c++ and expose them to lua
     * a general interface to expose c++ widgets to lua
+* handle resizing of screen
 
 # chore 
 * finish function _buffer_render

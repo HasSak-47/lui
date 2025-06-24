@@ -99,6 +99,7 @@ public:
     Buffer(size_t w, size_t h);
     Buffer(const Buffer& other);
     Buffer(Buffer&& other);
+    Buffer& operator=(Buffer&& other);
 
     ~Buffer();
 

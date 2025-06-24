@@ -24,6 +24,17 @@ Window::Window() : _back(_back_gen()) {
     this->_height = w.ws_row;
 }
 
+void Window::resize() {
+    struct winsize w;
+    ioctl(STDIN_FILENO, TIOCGWINSZ, &w);
+    if (this->_height != w.ws_row ||
+        this->_width != w.ws_col) {
+        this->_back   = Buffer(w.ws_col, w.ws_row);
+        this->_width  = w.ws_col;
+        this->_height = w.ws_row;
+    }
+}
+
 Window::~Window() {}
 
 void Window::render() {

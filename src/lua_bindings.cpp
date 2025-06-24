@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <lua.h>
 #include <ly/render/buffer.hpp>
 #include <ly/render/lua_bindings.hpp>
 #include <ly/render/widgets.hpp>
@@ -137,8 +138,7 @@ bool lua::Value::is_array() const {
 
 int64_t lua::Value::as_integer() const {
     if (this->_type != Ty::Integer) {
-        throw std::runtime_error(
-            "lua::Value is not an integer");
+        LY_THROW("lua::Value is not an integer");
     }
     return std::get<int64_t>(_data);
 }
@@ -147,24 +147,21 @@ bool lua::Value::as_boolean() const {
     if (this->_type != Ty::Boolean) {
         if (this->_type == Ty::None)
             return false;
-        throw std::runtime_error(
-            "lua::Value is not an boolean");
+        LY_THROW("lua::Value is not an boolean");
     }
     return std::get<bool>(_data);
 }
 
 double lua::Value::as_float() const {
     if (this->_type != Ty::Float) {
-        throw std::runtime_error(
-            "lua::Value is not a float");
+        LY_THROW("lua::Value is not a float");
     }
     return std::get<double>(_data);
 }
 
 const std::string& lua::Value::as_string() const {
     if (this->_type != Ty::String) {
-        throw std::runtime_error(
-            "lua::Value is not a string");
+        LY_THROW("lua::Value is not a string");
     }
     return std::get<std::string>(_data);
 }
@@ -185,16 +182,14 @@ lua::Value::MapType& lua::Value::as_map() {
 
 const lua::Value::ArrayType& lua::Value::as_array() const {
     if (this->_type != Ty::Array) {
-        throw std::runtime_error(
-            "lua::Value is not an array");
+        LY_THROW("lua::Value is not an array");
     }
     return std::get<ArrayType>(_data);
 }
 
 lua::Value::ArrayType& lua::Value::as_array() {
     if (this->_type != Ty::Array) {
-        throw std::runtime_error(
-            "lua::Value is not an array");
+        LY_THROW("lua::Value is not an array");
     }
     return std::get<ArrayType>(_data);
 }
@@ -210,8 +205,7 @@ lua::Value& lua::Value::operator[](const std::string& key) {
         auto [it, ok] =
             map.insert_or_assign(key, Value::none());
         if (!ok) {
-            throw std::runtime_error(
-                "failed to update state");
+            LY_THROW("failed to update state");
         }
         return it->second;
     }
@@ -237,8 +231,7 @@ const lua::Value& lua::Value::operator[](
 
 lua::Value& lua::Value::operator[](size_t index) {
     if (this->_type != Ty::Array) {
-        throw std::runtime_error(
-            "lua::Value is not an array");
+        LY_THROW("lua::Value is not an array");
     }
     return std::get<ArrayType>(this->_data)[index];
 }
@@ -246,8 +239,7 @@ lua::Value& lua::Value::operator[](size_t index) {
 const lua::Value& lua::Value::operator[](
     size_t index) const {
     if (this->_type != Ty::Array) {
-        throw std::runtime_error(
-            "lua::Value is not an array");
+        LY_THROW("lua::Value is not an array");
     }
     return std::get<ArrayType>(this->_data)[index];
 }
@@ -261,8 +253,7 @@ size_t lua::Value::size() const {
     case Ty::String:
         return std::get<std::string>(this->_data).size();
     default:
-        throw std::runtime_error(
-            "lua::Value type does not support size()");
+        LY_THROW("lua::Value type does not support size()");
     }
 }
 
@@ -471,6 +462,21 @@ static int _buffer_get_size(lua_State* L) {
 }
 
 static int _buffer_render(lua_State* L) {
+    if (lua_isuserdata(L, 2)) {
+        // TODO: handle userdata
+        std::cerr << "userdata not handled yet";
+        return 0;
+    }
+    if (lua_istable(L, 2)) {
+        // TODO: handle tables in a semi well done way
+        lua_getfield(L, 2, "render");
+        lua_pushvalue(L, 2);
+        lua_pushvalue(L, 1);
+        lua_call(L, 2, 0);
+        lua_pop(L, 1);
+        return 0;
+    }
+
     void* udata  = lua_touserdata(L, 1);
     Buffer* data = nullptr;
 
@@ -479,17 +485,6 @@ static int _buffer_render(lua_State* L) {
     }
     else {
         data = static_cast<Buffer*>(udata);
-    }
-
-    if (lua_isuserdata(L, 2)) {
-        // TODO: handle userdata
-        std::cerr << "userdata not handled yet";
-        return 0;
-    }
-    if (lua_istable(L, 2)) {
-        // TODO: handle tables
-        std::cerr << "tables not handled yet";
-        return 0;
     }
     lua::Value val = to_value(L, 2);
     data->render_widget(val);
