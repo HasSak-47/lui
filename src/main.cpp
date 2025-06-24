@@ -10,32 +10,9 @@
 
 #include <ly/render/buffer.hpp>
 #include <ly/render/lua_bindings.hpp>
+#include <ly/render/utils.hpp>
 #include <ly/render/widgets.hpp>
 #include <ly/render/window.hpp>
-
-bool got_original = false;
-
-struct termios orig_termios = {};
-
-void unset_raw_mode() {
-    if (got_original)
-        tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
-}
-
-void set_raw_mode() {
-    if (!got_original) {
-        tcgetattr(STDIN_FILENO, &orig_termios);
-        atexit(unset_raw_mode);
-        got_original = true;
-    }
-
-    struct termios raw = orig_termios;
-    raw.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
-    raw.c_cc[VMIN]  = 0;
-    raw.c_cc[VTIME] = 0;
-
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
-}
 
 int main(int argc, char* argv[]) {
     using namespace std::chrono;
@@ -50,12 +27,8 @@ int main(int argc, char* argv[]) {
     size_t tick = 0;
     char cbuf   = 0;
     auto val    = render::lua::Value::float_val(10.);
-
-    printf("\e[?1049h"); // enter alternate screen
-    printf("\e[0;0H");   // move cursor to 0
-    printf("\e[?25l");   // hide cursor
-    fflush(stdout);
-    set_raw_mode();
+    ly::render::set_raw_mode();
+    ly::render::enter_alternate_screen();
 
     while (!state.should_exit()) {
         auto t_start = high_resolution_clock::now();
@@ -92,9 +65,7 @@ int main(int argc, char* argv[]) {
             render::lua::Value::float_val((double)fps));
     }
 
-    unset_raw_mode();
-    printf("\e[?1049l"); // leave alternate screen
-    printf("\e[?25h");   // show cursor
-    fflush(stdout);
+    ly::render::unset_raw_mode();
+    ly::render::leave_alternate_screen();
     return 0;
 }
