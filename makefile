@@ -1,6 +1,6 @@
 # Output binary and static library
 OUT := test
-LIB := lib/libtui.a
+LIB := lib/liblui.a
 
 # Directories
 SRC_DIR := src
