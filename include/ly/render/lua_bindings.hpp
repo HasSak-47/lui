@@ -163,6 +163,7 @@ public:
 
     void update() override;
     void render(Buffer& buf) const override;
+    void debug_print() const;
 
     friend class State;
 };

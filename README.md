@@ -16,7 +16,6 @@ A Terminal UI Rendering System. the engine is implemented in C++ with Lua script
 * Lua 5.4
 * POSIX-compatible terminal (Linux/macOS)
 
-
 ### Process
 
 - getting the stable code `git clone -b stable https://github.com/HasSak-47/lui.git`

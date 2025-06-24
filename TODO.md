@@ -1,7 +1,3 @@
-# Bugs
-* Widgets are not distinct instances in lua 
-    * create a Widget:create{} to handle inheritance. and a Widget:new{} to create a widget tracked in c++ land
-
 # Footguns
 * Using printf to enter and exit alternate screen and moving the cursor
 * The interaction between the Value class and lua
