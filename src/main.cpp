@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
     using namespace std::chrono;
     using namespace ly;
 
-    constexpr auto tick_duration = 16ms;
+    constexpr auto tick_duration = 1ms;
 
     render::Window win;
 

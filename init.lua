@@ -79,10 +79,11 @@ local M_type = widget:extend {
     end,
 
     render = function(self, buffer)
-        buffer:get_sub(1, 1, 10, 1):render('fps : ' .. state.fps);
-        buffer:get_sub(1, 2, 10, 1):render('tick: ' .. state.tick);
+        buffer:get_sub(1, 1, 40, 1):render('fps : ' .. state.fps);
+        buffer:get_sub(1, 2, 40, 1):render('tick: ' .. state.tick);
         buffer:get_sub(1, 3, 40, 1):render(self.bars.thousands)
         buffer:get_sub(1, 4, 40, 1):render(self.bars.hundrets)
+        buffer:get_sub(1, 5, 40, 1):render('utf8 string: ññññ');
     end,
 
     update = function(self)
