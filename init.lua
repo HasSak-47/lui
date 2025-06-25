@@ -44,11 +44,11 @@ local Bar = widget:extend({
         return t
     end,
 
-    render = function(this, buffer)
+    render = function(self, buffer)
         local x, _ = buffer:get_size()
 
-        if this.show_number and x > 10 then
-            local s = string.format("%.0f%%", this.percentage * 100)
+        if self.show_number and x > 10 then
+            local s = string.format("%.0f%%", self.percentage * 100)
             buffer:get_sub(x - 7, 1, 7, 1):render(s)
             x = x - 8
         end
@@ -57,7 +57,7 @@ local Bar = widget:extend({
         buffer:set(x, 1, ']')
 
         local bar_width = x - 2
-        for i = 1, math.floor(bar_width * this.percentage) do
+        for i = 1, math.floor(bar_width * self.percentage) do
             buffer:set(i + 1, 1, '|', { type = "bit", r = 1, g = 0, b = 0 })
         end
     end
@@ -78,15 +78,17 @@ local M_type = widget:extend {
         return t
     end,
 
-    render = function(this, buffer)
-        buffer:get_sub(1, 1, 10, 1):render('fps : ' .. state.fps);
+    render = function(self, buffer)
+        buffer:get_sub(1, 1, 10, 1):render('fps : ' .. state.fps);
         buffer:get_sub(1, 2, 10, 1):render('tick: ' .. state.tick);
+        buffer:get_sub(1, 3, 40, 1):render(self.bars.thousands)
+        buffer:get_sub(1, 4, 40, 1):render(self.bars.hundrets)
     end,
 
-    update = function(this)
+    update = function(self)
         local tick = state.tick or 0
-        this.bars.thousands.percentage = ((tick + this.bars.thousands.percentage) % 1000) / 1000
-        this.bars.hundrets.percentage = ((tick + this.bars.hundrets.percentage) % 100) / 100
+        self.bars.thousands.percentage = ((tick + self.bars.thousands.percentage) % 1000) / 1000
+        self.bars.hundrets.percentage = ((tick + self.bars.hundrets.percentage) % 100) / 100
     end
 }
 

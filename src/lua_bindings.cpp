@@ -545,8 +545,7 @@ static int _buffer_set(lua_State* L) {
     int top = lua_gettop(L);
 
     if (top >= 4 && lua_type(L, 4) == LUA_TSTRING) {
-        const char* str = lua_tostring(L, 4);
-        unit.chr        = str[0];
+        unit.data = lua_tostring(L, 4);
     }
 
     int color_idx =
@@ -567,13 +566,13 @@ static int _buffer_set(lua_State* L) {
         lua_pop(L, 4);
 
         if (ty == "bit") {
-            r        = (r & 1) << 0;
-            g        = (g & 1) << 1;
-            b        = (b & 1) << 2;
-            unit.col = ConsoleColor(r | g | b);
+            r       = (r & 1) << 0;
+            g       = (g & 1) << 1;
+            b       = (b & 1) << 2;
+            unit.fc = ConsoleColor(r | g | b);
         }
         else if (ty == "8bit") {
-            unit.col = ConsoleColor(Color<ly::u8>(
+            unit.fc = ConsoleColor(Color<ly::u8>(
                 r & 0xff, g & 0xff, b & 0xff));
         }
     }

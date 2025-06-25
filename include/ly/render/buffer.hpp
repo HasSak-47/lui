@@ -58,6 +58,7 @@ public:
     void display();
 
     static const ConsoleColor WHITE;
+    static const ConsoleColor BLACK;
     static const ConsoleColor RED;
     static const ConsoleColor YELLOW;
     static const ConsoleColor GREEN;
@@ -67,8 +68,9 @@ public:
 };
 
 struct Unit {
-    char32_t chr = ' ';
-    ConsoleColor col;
+    std::string data = " ";
+    ConsoleColor fc;
+    ConsoleColor bc;
     Unit();
 };
 
@@ -124,6 +126,7 @@ public:
         render(*this, widget);
     }
 
+    // TODO: handle utf8 strings
     template <typename T>
         requires(!Renderable<T> && OstreamFormattable<T>)
     void render_widget(const T& widget) {
@@ -138,8 +141,8 @@ public:
                 break;
             }
 
-            this->get(i, j).chr = c;
-            this->get(i, j).col = ConsoleColor::WHITE;
+            this->get(i, j).data = c;
+            this->get(i, j).fc   = ConsoleColor::WHITE;
             idx++;
         }
     }
