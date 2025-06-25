@@ -7,6 +7,7 @@ luall
 log.txt
 monitor
 test
+*perf*
 
 # python
 **/__pycache__

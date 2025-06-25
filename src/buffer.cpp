@@ -38,7 +38,19 @@ bool ConsoleColor::operator==(
     return this->dt.true_col == other.dt.true_col;
 }
 
-void ConsoleColor::display() {
+void ConsoleColor::display_bc() {
+    switch (this->_ty) {
+    case Bit:
+        printf("\e[4%dm", (int)this->dt.bit_col);
+        break;
+    case TrueColor:
+        printf("\e[48;2;%d;%d;%dm", this->dt.true_col.r,
+            this->dt.true_col.g, this->dt.true_col.b);
+        break;
+    }
+}
+
+void ConsoleColor::display_fc() {
     switch (this->_ty) {
     case Bit:
         printf("\e[3%dm", (int)this->dt.bit_col);
@@ -52,6 +64,50 @@ void ConsoleColor::display() {
 
 Unit::Unit()
     : fc(ConsoleColor::WHITE), bc(ConsoleColor::BLACK) {}
+
+static size_t utf8_char_length(unsigned char c) {
+    if ((c & 0b10000000) == 0)
+        return 1;
+    if ((c & 0b11100000) == 0b11000000)
+        return 2;
+    if ((c & 0b11110000) == 0b11100000)
+        return 3;
+    if ((c & 0b11111000) == 0b11110000)
+        return 4;
+    return 1; // fallback, invalid UTF-8
+}
+
+Su8::Su8(const char* str) {
+    const char* p = str;
+    while (*p) {
+        size_t len = utf8_char_length(
+            static_cast<unsigned char>(*p));
+        _cs.emplace_back(p, len);
+        p += len;
+    }
+}
+
+std::string Su8::to_string() const {
+    std::string result;
+    for (const auto& c : _cs) result += c;
+    return result;
+}
+
+std::string& Su8::operator[](size_t index) {
+    if (index >= _cs.size())
+        throw std::out_of_range("Su8 index out of range");
+    return _cs[index];
+}
+
+const std::string& Su8::operator[](size_t index) const {
+    if (index >= _cs.size())
+        throw std::out_of_range("Su8 index out of range");
+    return _cs[index];
+}
+
+size_t Su8::size() const {
+    return _cs.size();
+}
 
 Buffer::~Buffer() {}
 

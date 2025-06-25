@@ -25,6 +25,9 @@ public:
     void render();
     void resize();
 
+    ConsoleColor default_bc = ConsoleColor::BLACK;
+    ConsoleColor default_fc = ConsoleColor::WHITE;
+
     const size_t width() const { return _width; }
     const size_t height() const { return _height; }
 };

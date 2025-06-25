@@ -1,9 +1,11 @@
 #include <cstdio>
+#include <print>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
 #include <ly/render/buffer.hpp>
 #include <ly/render/window.hpp>
+#include "ly/render/utils.hpp"
 
 using namespace ly::render;
 
@@ -35,29 +37,28 @@ void Window::resize() {
 }
 
 void Window::render() {
-    ConsoleColor last = ConsoleColor::WHITE;
-    last.display();
+    ConsoleColor last_fc = ConsoleColor::WHITE;
+    ConsoleColor last_bc = ConsoleColor::BLACK;
+    last_fc.display_fc();
+    last_bc.display_bc();
 
+    reset_cursor();
     for (size_t y = 0; y < _back.height(); ++y) {
         for (size_t x = 0; x < _back.width(); ++x) {
             auto& cur = _back.get(x, y);
-            // update color if needed
-            if (cur.fc != last) {
-                last = cur.fc;
-                last.display();
-            }
+
+            cur.fc.display_fc();
+            cur.bc.display_bc();
 
             printf("%s", cur.data.c_str());
-            cur.bc   = ConsoleColor::WHITE;
+
+            cur.fc.display_fc();
+            cur.bc.display_bc();
+            cur.fc   = ConsoleColor::WHITE;
+            cur.bc   = ConsoleColor::BLACK;
             cur.data = " ";
         }
-        if (y + 1 < _back.height()) {
-            std::printf("\n");
-        }
     }
-
-    last = ConsoleColor::WHITE;
-    last.display();
 }
 
 Buffer Window::get_subbuf(

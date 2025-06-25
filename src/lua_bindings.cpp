@@ -404,7 +404,8 @@ std::ostream& lua::operator<<(
     std::ostream& os, const lua::Value& val) {
     using Ty = ly::render::lua::Value::Ty;
 
-    bool show_type = false;
+    // TODO: make this a flag
+    const bool show_type = false;
 
     // TODO: finish this match
     switch (val._type) {
