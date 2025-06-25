@@ -79,11 +79,12 @@ local M_type = widget:extend {
     end,
 
     render = function(self, buffer)
-        buffer:get_sub(1, 1, 40, 1):render('fps : ' .. state.fps);
-        buffer:get_sub(1, 2, 40, 1):render('tick: ' .. state.tick);
-        buffer:get_sub(1, 3, 40, 1):render(self.bars.thousands)
-        buffer:get_sub(1, 4, 40, 1):render(self.bars.hundrets)
-        buffer:get_sub(1, 5, 40, 1):render('utf8 string: ññññ');
+        local x, y = buffer:get_size()
+        buffer:get_sub(1, 1, x, 1):render('fps : ' .. state.fps);
+        buffer:get_sub(1, 2, x, 1):render('tick: ' .. state.tick);
+        buffer:get_sub(1, 3, x, 1):render(self.bars.thousands)
+        buffer:get_sub(1, 4, x, 1):render(self.bars.hundrets)
+        buffer:get_sub(1, 5, x, 1):render('utf8 string: ññññ');
     end,
 
     update = function(self)
@@ -94,5 +95,12 @@ local M_type = widget:extend {
 }
 
 M_type.__index = M_type
+
+state.set_color("bg", {
+    type = "8bit",
+    r = 0,
+    g = 0,
+    b = 0,
+});
 
 return M_type:new();

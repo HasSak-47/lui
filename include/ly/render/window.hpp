@@ -18,6 +18,8 @@ public:
     Window();
     ~Window();
 
+    void init_buffer();
+
     Buffer get_subbuf(
         size_t x, size_t y, size_t w, size_t h);
     Buffer& get_buf() { return _back; }

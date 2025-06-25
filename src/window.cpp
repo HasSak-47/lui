@@ -9,19 +9,7 @@
 
 using namespace ly::render;
 
-static Buffer _gen_buffer() {
-    struct winsize w;
-    ioctl(STDIN_FILENO, TIOCGWINSZ, &w);
-    return Buffer(w.ws_col, w.ws_row);
-}
-
-Window::Window()
-    : _front(_gen_buffer()), _back(_gen_buffer()) {
-    struct winsize w;
-    ioctl(STDIN_FILENO, TIOCGWINSZ, &w);
-    _width  = w.ws_col;
-    _height = w.ws_row;
-}
+Window::Window() : _front(10, 10), _back(10, 10) {}
 
 Window::~Window() {}
 
@@ -36,9 +24,20 @@ void Window::resize() {
     }
 }
 
+void Window::init_buffer() {
+    struct winsize w;
+    ioctl(STDIN_FILENO, TIOCGWINSZ, &w);
+    _width       = w.ws_col;
+    _height      = w.ws_row;
+    this->_front = Buffer(_width, _height, this->default_fc,
+        this->default_bc);
+    this->_back  = Buffer(_width, _height, this->default_fc,
+         this->default_bc);
+}
+
 void Window::render() {
-    ConsoleColor last_fc = ConsoleColor::WHITE;
-    ConsoleColor last_bc = ConsoleColor::BLACK;
+    ConsoleColor last_fc = this->default_fc;
+    ConsoleColor last_bc = this->default_bc;
     last_fc.display_fc();
     last_bc.display_bc();
 
@@ -47,15 +46,25 @@ void Window::render() {
         for (size_t x = 0; x < _back.width(); ++x) {
             auto& cur = _back.get(x, y);
 
-            cur.fc.display_fc();
-            cur.bc.display_bc();
+            if (cur.fc != last_fc) {
+                cur.fc.display_fc();
+                last_fc = cur.fc;
+            }
 
+            if (cur.bc != last_bc) {
+                cur.bc.display_bc();
+                last_bc = cur.bc;
+            }
+
+            // this is a bottleneck according to perf lol
+            // maybe I should just create a long strign and
+            // print that idk
             printf("%s", cur.data.c_str());
 
             cur.fc.display_fc();
             cur.bc.display_bc();
-            cur.fc   = ConsoleColor::WHITE;
-            cur.bc   = ConsoleColor::BLACK;
+            cur.fc   = this->default_fc;
+            cur.bc   = this->default_bc;
             cur.data = " ";
         }
     }
