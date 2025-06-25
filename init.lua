@@ -21,7 +21,6 @@
 ---@field update function
 
 local letters = ''
-
 state.on_event('keypress', function(key)
     if key == 'q' then
         state.exit = true;
