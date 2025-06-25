@@ -647,6 +647,17 @@ lua::LuaWidget::LuaWidget(std::weak_ptr<lua_State> L)
     this->_ref = luaL_ref(Lg, LUA_REGISTRYINDEX);
 }
 
+lua::LuaWidget::LuaWidget(lua::LuaWidget&& W)
+    : _L(W._L), _ref(W._ref) {}
+
+lua::LuaWidget& lua::LuaWidget::operator=(
+    lua::LuaWidget&& other) {
+    this->_L   = other._L;
+    this->_ref = other._ref;
+    other._ref = LUA_NOREF;
+    return *this;
+}
+
 lua::LuaWidget::~LuaWidget() {
     auto L_lock = this->_L.lock();
     if (_ref != LUA_NOREF) {

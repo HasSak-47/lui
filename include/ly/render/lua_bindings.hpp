@@ -159,6 +159,8 @@ protected:
     LuaWidget(std::weak_ptr<lua_State> L);
 
 public:
+    LuaWidget(LuaWidget&& other);
+    LuaWidget& operator=(LuaWidget&& other);
     ~LuaWidget() override;
 
     void update() override;
