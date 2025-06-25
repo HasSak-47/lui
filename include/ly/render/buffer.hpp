@@ -133,7 +133,9 @@ private:
         _Buffer buf);
 
 public:
-    Buffer(size_t w, size_t h);
+    Buffer(size_t w, size_t h,
+        ConsoleColor fg = ConsoleColor::WHITE,
+        ConsoleColor bg = ConsoleColor::BLACK);
     Buffer(const Buffer& other);
     Buffer(Buffer&& other);
 
@@ -159,7 +161,6 @@ public:
         render(*this, widget);
     }
 
-    // TODO: handle utf8 strings
     template <typename T>
         requires(!Renderable<T> && OstreamFormattable<T>)
     void render_widget(const T& widget) {

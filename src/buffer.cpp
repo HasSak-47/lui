@@ -118,7 +118,8 @@ Buffer::Buffer(
     this->_data = buf;
 }
 
-Buffer::Buffer(size_t w, size_t h)
+Buffer::Buffer(
+    size_t w, size_t h, ConsoleColor fg, ConsoleColor bg)
     : _x(0), _y(0), _w(w), _h(h) {
 
     _Buffer buf =
@@ -128,8 +129,12 @@ Buffer::Buffer(size_t w, size_t h)
     for (size_t i = 0; i < w; ++i) {
         std::vector<Unit> col = {};
 
-        for (size_t j = 0; j < h; ++j)
-            col.push_back(Unit());
+        for (size_t j = 0; j < h; ++j) {
+            Unit u;
+            u.fc = fg;
+            u.bc = bg;
+            col.push_back(u);
+        }
 
         (*buf)[i] = col;
     }

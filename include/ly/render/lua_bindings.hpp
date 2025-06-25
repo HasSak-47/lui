@@ -1,6 +1,7 @@
 #ifndef __RENDER_LUA_BINDINGS_HPP__
 #define __RENDER_LUA_BINDINGS_HPP__
 
+#include <functional>
 #include <ly/render/widgets.hpp>
 
 #include <lua.hpp>
@@ -123,6 +124,9 @@ class State;
 class LuaWidget;
 
 class State {
+public:
+    using Fn = std::function<int(lua_State*)>;
+
 private:
     struct LuaStateDeleter {
         void operator()(lua_State* L) const {
@@ -133,6 +137,7 @@ private:
 
     Value _data = Value::map();
     std::shared_ptr<lua_State> _L;
+    std::unordered_map<std::string, Fn> _funcs;
 
 public:
     State();
@@ -141,7 +146,11 @@ public:
     bool should_exit();
 
     void set_data(std::string key, Value val);
+    void set_function(std::string key, Fn fn);
     const Value& get_data(std::string key) const;
+    bool func_exitst(std::string key);
+    Fn& get_func(std::string key);
+    void debug_print() const;
 
     // LuaWidget
     LuaWidget from_file(std::string file);
@@ -152,6 +161,7 @@ public:
 class LuaWidget : public widgets::Widget {
 private:
     std::weak_ptr<lua_State> _L;
+    std::unordered_map<std::string, int> _events = {};
     int _ref;
 
 protected:

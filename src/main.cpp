@@ -18,11 +18,43 @@ int main(int argc, char* argv[]) {
     using namespace std::chrono;
     using namespace ly;
 
-    constexpr auto tick_duration = 1ms;
+    constexpr auto tick_duration = 20ms;
 
     render::Window win;
 
     ly::render::lua::State state;
+    state.set_function("set_color", [&](lua_State* L) {
+        std::string type = lua_tostring(L, 1);
+
+        render::ConsoleColor& color = (type == "fg")
+                                          ? win.default_fc
+                                          : win.default_bc;
+        lua_getfield(L, 2, "type");
+        lua_getfield(L, 2, "r");
+        lua_getfield(L, 2, "g");
+        lua_getfield(L, 2, "b");
+
+        std::string ty = lua_tostring(L, -4);
+        int r          = lua_tointeger(L, -3);
+        int g          = lua_tointeger(L, -2);
+        int b          = lua_tointeger(L, -1);
+        lua_pop(L, 4);
+
+        if (ty == "bit") {
+            r     = (r & 1) << 0;
+            g     = (g & 1) << 1;
+            b     = (b & 1) << 2;
+            color = render::ConsoleColor(r | g | b);
+        }
+        else if (ty == "8bit") {
+            color =
+                render::ConsoleColor(render::Color<ly::u8>(
+                    r & 0xff, g & 0xff, b & 0xff));
+        }
+
+        return 0;
+    });
+
     auto widget = state.from_file("init.lua");
 
     float fps   = 0;
@@ -32,6 +64,7 @@ int main(int argc, char* argv[]) {
     ly::render::set_raw_mode();
     ly::render::enter_alternate_screen();
 
+    win.init_buffer();
     while (!state.should_exit()) {
         render::reset_cursor();
         auto t_start = high_resolution_clock::now();

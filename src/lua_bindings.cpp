@@ -766,6 +766,8 @@ static void init_widget_metatable(lua_State* L) {
 // ----------[events & state]----------
 std::unordered_map<std::string, int> _events = {};
 
+// TODO: rework this so State holds _events instead of using
+// globals
 static int _state_on_event(lua_State* L) {
     const char* event = luaL_checkstring(L, 1);
     luaL_checktype(L, 2, LUA_TFUNCTION);
@@ -782,6 +784,13 @@ static int _state_on_event(lua_State* L) {
 
     return 0;
 }
+
+static int _state_exec(lua_State* L) {
+    lua::State::Fn* fn = static_cast<lua::State::Fn*>(
+        lua_touserdata(L, lua_upvalueindex(1)));
+    return (*fn)(L);
+}
+
 static int _state_index(lua_State* L) {
     auto* state = static_cast<lua::State*>(
         lua_touserdata(L, lua_upvalueindex(1)));
@@ -793,6 +802,13 @@ static int _state_index(lua_State* L) {
     if (!key)
         return luaL_error(
             L, "__index expects a string key");
+
+    if (state->func_exitst(key)) {
+        auto& f = state->get_func(key);
+        lua_pushlightuserdata(L, &f);
+        lua_pushcclosure(L, _state_exec, 1);
+        return 1;
+    }
 
     auto val = state->get_data(key);
     _push_value(L, val);
@@ -810,6 +826,13 @@ static int _state_newindex(lua_State* L) {
     if (!key)
         return luaL_error(
             L, "__newindex expects a string key");
+
+    if (state->func_exitst(key)) {
+        auto& f = state->get_func(key);
+        lua_pushlightuserdata(L, &f);
+        lua_pushcclosure(L, _state_exec, 1);
+        return 1;
+    }
 
     auto val = to_value(L, 3);
     state->set_data(key, val);
@@ -876,6 +899,19 @@ const lua::Value& lua::State::get_data(
     return val;
 }
 
+void lua::State::set_function(
+    std::string key, lua::State::Fn fn) {
+    this->_funcs.insert_or_assign(key, fn);
+}
+
+lua::State::Fn& lua::State::get_func(std::string key) {
+    return this->_funcs.find(key)->second;
+}
+
+bool lua::State::func_exitst(std::string key) {
+    return this->_funcs.find(key) != this->_funcs.end();
+}
+
 lua::State::State() {
     using namespace lua;
     auto L_  = luaL_newstate();
@@ -894,6 +930,17 @@ lua::State::State() {
     init_widget_metatable(this->_L.get());
     init_state_table(*this, this->_L.get());
 };
+
+void lua::State::debug_print() const {
+    std::cout << "State:\n";
+    std::cout << "Functions:\n";
+    for (auto& a : this->_funcs)
+        std::cout << '\t' << a.first << '\n';
+
+    std::cout << "Values:\n";
+    for (auto& a : this->_data.as_map())
+        std::cout << '\t' << a.first << '\n';
+}
 
 lua::LuaWidget lua::State::from_file(std::string file) {
     lua_State* L = this->_L.get();
