@@ -42,14 +42,17 @@ void Window::render() {
         for (size_t x = 0; x < _back.width(); ++x) {
             auto& cur = _back.get(x, y);
             // update color if needed
-            if (cur.col != last) {
-                last = cur.col;
+            if (cur.fc != last) {
+                last = cur.fc;
                 last.display();
             }
 
-            printf("%lc", cur.chr);
-            cur.col = ConsoleColor::WHITE;
-            cur.chr = ' ';
+            printf("%s", cur.data.c_str());
+            cur.bc   = ConsoleColor::WHITE;
+            cur.data = " ";
+        }
+        if (y + 1 < _back.height()) {
+            std::printf("\n");
         }
     }
 

@@ -1,4 +1,3 @@
-#include <functional>
 #include <memory>
 #include <ostream>
 #include <utility>
@@ -7,8 +6,8 @@
 #include <ly/render/buffer.hpp>
 
 namespace ly::render {
-const ConsoleColor ConsoleColor::WHITE =
-    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::WHITE);
+const ConsoleColor ConsoleColor::BLACK =
+    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::BLACK);
 const ConsoleColor ConsoleColor::RED =
     ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::RED);
 const ConsoleColor ConsoleColor::YELLOW = ConsoleColor(
@@ -21,6 +20,8 @@ const ConsoleColor ConsoleColor::CYAN =
     ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::CYAN);
 const ConsoleColor ConsoleColor::BLUE =
     ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::BLUE);
+const ConsoleColor ConsoleColor::WHITE =
+    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::WHITE);
 } // namespace ly::render
 
 using namespace ly::render;
@@ -49,7 +50,8 @@ void ConsoleColor::display() {
     }
 }
 
-Unit::Unit() : col(ConsoleColor::WHITE) {}
+Unit::Unit()
+    : fc(ConsoleColor::WHITE), bc(ConsoleColor::BLACK) {}
 
 Buffer::~Buffer() {}
 
@@ -144,7 +146,7 @@ std::ostream& operator<<(
     std::ostream& os, const Buffer& buf) {
     for (size_t j = 0; j < buf._h; ++j) {
         for (size_t i = 0; i < buf._w; ++i) {
-            os << (char)buf.get(i, j).chr;
+            os << buf.get(i, j).data;
         }
         os << '\n';
     }
