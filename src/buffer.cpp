@@ -79,6 +79,16 @@ static size_t utf8_char_length(unsigned char c) {
 
 Su8::Su8(const char* str) {
     const char* p = str;
+    size_t count  = 0;
+
+    while (*p) {
+        p += utf8_char_length(
+            static_cast<unsigned char>(*p));
+        ++count;
+    }
+    _cs.reserve(count);
+
+    p = str;
     while (*p) {
         size_t len = utf8_char_length(
             static_cast<unsigned char>(*p));
@@ -183,10 +193,10 @@ Unit& Buffer::get(size_t x, size_t y) const {
     x += this->_x;
     y += this->_y;
 
-    if (x >= (*_data).size())
-        x = (*_data).size() - 1;
-    if (y >= (*_data)[x].size())
-        y = (*_data)[x].size() - 1;
+    if (x >= _data->size())
+        x = _data->size() - 1;
+    if (y >= _data.get()[x].size())
+        y = _data.get()[x].size() - 1;
 
     return (*this->_data)[x][y];
 }

@@ -41,6 +41,9 @@ void Window::render() {
     last_fc.display_fc();
     last_bc.display_bc();
 
+    std::string buffer;
+    buffer.resize(this->height() * 10);
+
     reset_cursor();
     for (size_t y = 0; y < _back.height(); ++y) {
         for (size_t x = 0; x < _back.width(); ++x) {
@@ -59,10 +62,10 @@ void Window::render() {
             // this is a bottleneck according to perf lol
             // maybe I should just create a long strign and
             // print that idk
+            auto front = _front.get(x, y);
+
             printf("%s", cur.data.c_str());
 
-            cur.fc.display_fc();
-            cur.bc.display_bc();
             cur.fc   = this->default_fc;
             cur.bc   = this->default_bc;
             cur.data = " ";

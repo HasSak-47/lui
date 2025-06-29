@@ -79,7 +79,7 @@ local M_type = widget:extend {
     end,
 
     render = function(self, buffer)
-        local x, y = buffer:get_size()
+        local x, _ = buffer:get_size()
         buffer:get_sub(1, 1, x, 1):render('fps : ' .. state.fps);
         buffer:get_sub(1, 2, x, 1):render('tick: ' .. state.tick);
         buffer:get_sub(1, 3, x, 1):render(self.bars.thousands)
