@@ -6,12 +6,19 @@
 
 namespace ly::render::widgets {
 
+class Widget;
+class RootWidget;
+
+struct Vec2 {
+    size_t x, y;
+};
+
 class Widget {
 protected:
     struct Bind {
         std::shared_ptr<Widget> W;
-        size_t x, y;
-        size_t w, h;
+        Vec2 pos;
+        Vec2 dim;
     };
 
     std::vector<Bind> _binds;
