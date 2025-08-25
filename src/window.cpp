@@ -1,5 +1,4 @@
 #include <cstdio>
-#include <print>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -9,7 +8,9 @@
 
 using namespace ly::render;
 
-Window::Window() : _front(10, 10), _back(10, 10) {}
+Window::Window() : _front(0, 0), _back(0, 0) {
+    this->init_buffer();
+}
 
 Window::~Window() {}
 
@@ -35,11 +36,13 @@ void Window::init_buffer() {
          this->default_bc);
 }
 
+// TODO: make better handling of black color
 void Window::render() {
     ConsoleColor last_fc = this->default_fc;
     ConsoleColor last_bc = this->default_bc;
+    if (last_bc != ConsoleColor::BLACK)
+        last_bc.display_bc();
     last_fc.display_fc();
-    last_bc.display_bc();
 
     reset_cursor();
     for (size_t y = 0; y < _back.height(); ++y) {
@@ -47,7 +50,8 @@ void Window::render() {
             auto& cur = _back.get(x, y);
 
             if (cur.fc != last_fc) {
-                cur.fc.display_fc();
+                if (cur.fc != ConsoleColor::BLACK)
+                    cur.fc.display_bc();
                 last_fc = cur.fc;
             }
 
@@ -66,6 +70,7 @@ void Window::render() {
             cur.data = " ";
         }
     }
+    fflush(stdout);
 }
 
 Buffer Window::get_subbuf(

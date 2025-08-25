@@ -65,10 +65,10 @@ void Element::render(Buffer& buf) const {
         auto& child = this->_childs[i];
 
         Vec4<Unit> margin = {
-            this->margin.a.to_abs(w),
-            this->margin.b.to_abs(h),
-            this->margin.c.to_abs(w),
-            this->margin.d.to_abs(h),
+            child->margin.a.to_abs(w),
+            child->margin.b.to_abs(h),
+            child->margin.c.to_abs(w),
+            child->margin.d.to_abs(h),
         };
 
         if (margin.a.abs + margin.c.abs >= w)
@@ -82,8 +82,6 @@ void Element::render(Buffer& buf) const {
         auto sb    = usefull.get_sub_buffer(
             margin.a.abs, offset + margin.b.abs, lwp, lhp);
 
-        printf("render %lu %lu %lu %lu\n", margin.a.abs,
-            margin.b.abs + offset, lwp, lhp);
-        sb.render_widget(child);
+        sb.render_widget(*child);
     }
 }
