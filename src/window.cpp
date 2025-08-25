@@ -61,8 +61,6 @@ void Window::render() {
             // print that idk
             printf("%s", cur.data.c_str());
 
-            cur.fc.display_fc();
-            cur.bc.display_bc();
             cur.fc   = this->default_fc;
             cur.bc   = this->default_bc;
             cur.data = " ";

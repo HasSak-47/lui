@@ -1,3 +1,58 @@
+#include <ly/render/widgets.hpp>
+#include <ly/render/window.hpp>
+#include <ly/ty.hpp>
+
+#include <algorithm>
+#include <chrono>
+#include <thread>
+#include "ly/render/utils.hpp"
+
+bool BAD = false;
+
+class TestElement : public ly::render::widgets::Element {
+public:
+    ~TestElement() override {}
+
+    void content(ly::render::Buffer& buf) const override {
+        BAD = true;
+        buf.render_widget("test widget");
+    };
+    size_t content_width(
+        const ly::render::Buffer& buf) const override {
+        return buf.width() < 12 ? buf.width() : 12;
+    };
+    size_t content_height(
+        const ly::render::Buffer& buf) const override {
+        return std::max(
+            (size_t)12 / buf.width(), (size_t)1);
+    };
+};
+
+int main() {
+    using namespace ly;
+    render::Window win;
+    render::widgets::RootElement root = {};
+    root.add_child(
+        std::shared_ptr<render::widgets::Element>(
+            new TestElement{}));
+
+    render::enter_alternate_screen();
+    render::set_raw_mode();
+
+    win.get_buf().render_widget(root);
+    win.render();
+
+    using namespace std::chrono;
+    std::this_thread::sleep_for(2000ms);
+
+    render::leave_alternate_screen();
+    render::unset_raw_mode();
+    printf("bad: %d", BAD);
+
+    return 0;
+}
+
+/*
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -106,3 +161,4 @@ int main(int argc, char* argv[]) {
     ly::render::leave_alternate_screen();
     return 0;
 }
+*/

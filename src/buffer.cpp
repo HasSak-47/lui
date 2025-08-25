@@ -7,21 +7,21 @@
 
 namespace ly::render {
 const ConsoleColor ConsoleColor::BLACK =
-    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::BLACK);
+    ConsoleColor(ColorBit::BLACK);
 const ConsoleColor ConsoleColor::RED =
-    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::RED);
-const ConsoleColor ConsoleColor::YELLOW = ConsoleColor(
-    ConsoleColor::_ColorUnion::_BitCol::YELLOW);
+    ConsoleColor(ColorBit::RED);
+const ConsoleColor ConsoleColor::YELLOW =
+    ConsoleColor(ColorBit::YELLOW);
 const ConsoleColor ConsoleColor::GREEN =
-    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::GREEN);
-const ConsoleColor ConsoleColor::PURPLE = ConsoleColor(
-    ConsoleColor::_ColorUnion::_BitCol::PURPLE);
+    ConsoleColor(ColorBit::GREEN);
+const ConsoleColor ConsoleColor::PURPLE =
+    ConsoleColor(ColorBit::PURPLE);
 const ConsoleColor ConsoleColor::CYAN =
-    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::CYAN);
+    ConsoleColor(ColorBit::CYAN);
 const ConsoleColor ConsoleColor::BLUE =
-    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::BLUE);
+    ConsoleColor(ColorBit::BLUE);
 const ConsoleColor ConsoleColor::WHITE =
-    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::WHITE);
+    ConsoleColor(ColorBit::WHITE);
 } // namespace ly::render
 
 using namespace ly::render;
@@ -32,30 +32,31 @@ bool ConsoleColor::operator==(
         return false;
     }
 
-    if (this->_ty == ConsoleColor::Bit) {
+    if (this->_ty == ConsoleColor::ColorType::Bit) {
         return this->dt.bit_col == other.dt.bit_col;
     }
     return this->dt.true_col == other.dt.true_col;
 }
 
-void ConsoleColor::display_bc() {
+// TODO: override defaults
+void ConsoleColor::display_bc(bool override_default) {
     switch (this->_ty) {
-    case Bit:
+    case ConsoleColor::ColorType::Bit:
         printf("\e[4%dm", (int)this->dt.bit_col);
         break;
-    case TrueColor:
+    case ConsoleColor::ColorType::TrueColor:
         printf("\e[48;2;%d;%d;%dm", this->dt.true_col.r,
             this->dt.true_col.g, this->dt.true_col.b);
         break;
     }
 }
 
-void ConsoleColor::display_fc() {
+void ConsoleColor::display_fc(bool override_default) {
     switch (this->_ty) {
-    case Bit:
+    case ConsoleColor::ColorType::Bit:
         printf("\e[3%dm", (int)this->dt.bit_col);
         break;
-    case TrueColor:
+    case ConsoleColor::ColorType::TrueColor:
         printf("\e[38;2;%d;%d;%dm", this->dt.true_col.r,
             this->dt.true_col.g, this->dt.true_col.b);
         break;

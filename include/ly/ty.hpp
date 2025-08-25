@@ -1,5 +1,5 @@
-#ifndef __LY_INT_HPP__
-#define __LY_INT_HPP__
+#ifndef __LY_TY_HPP__
+#define __LY_TY_HPP__
 
 #include <cstddef>
 #include <cstdint>
@@ -17,6 +17,8 @@ MAKE_INT(64);
 #undef MAKE_INT
 
 typedef size_t usize;
+
+// assume x86
 typedef float f32;
 typedef double f64;
 

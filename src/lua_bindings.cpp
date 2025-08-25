@@ -1,3 +1,4 @@
+/*
 #include <cstdio>
 
 #include <ly/exceptions.hpp>
@@ -996,3 +997,4 @@ void lua::LuaWidget::debug_print() const {
 
     lua_pop(Lg, 1); // Pop table
 }
+*/

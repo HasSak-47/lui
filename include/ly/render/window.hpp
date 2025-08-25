@@ -1,8 +1,8 @@
 #ifndef __RENDER_WINDOW_HPP__
 #define __RENDER_WINDOW_HPP__
 
-#include <ly/int.hpp>
 #include <ly/render/buffer.hpp>
+#include <ly/ty.hpp>
 
 namespace ly::render {
 
@@ -18,6 +18,7 @@ public:
     Window();
     ~Window();
 
+    bool render_black = false;
     void init_buffer();
 
     Buffer get_subbuf(

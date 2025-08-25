@@ -1,7 +1,7 @@
 #ifndef __RENDER_BUFFER_HPP__
 #define __RENDER_BUFFER_HPP__
 
-#include <ly/int.hpp>
+#include <ly/ty.hpp>
 
 #include <concepts>
 #include <iostream>
@@ -17,6 +17,7 @@ class Buffer;
 std::ostream& operator<<(
     std::ostream& other, const ly::render::Buffer& buf);
 
+// definitions
 namespace ly::render {
 
 template <typename T>
@@ -24,39 +25,38 @@ struct Color {
     T r = {}, g = {}, b = {};
 };
 
+enum ColorBit : int8_t {
+    BLACK  = 0b000,
+    RED    = 0b001,
+    GREEN  = 0b010,
+    YELLOW = 0b011,
+    BLUE   = 0b100,
+    PURPLE = 0b101,
+    CYAN   = 0b110,
+    WHITE  = 0b111,
+};
+
 struct ConsoleColor {
 private:
-    enum { Bit, TrueColor } _ty;
+    enum class ColorType { Bit, TrueColor } _ty;
     union _ColorUnion {
-        enum class _BitCol : int32_t {
-            BLACK  = 0b000,
-            RED    = 0b001,
-            GREEN  = 0b010,
-            YELLOW = 0b011,
-            BLUE   = 0b100,
-            PURPLE = 0b101,
-            CYAN   = 0b110,
-            WHITE  = 0b111,
-        } bit_col;
+        ColorBit bit_col;
         Color<u8> true_col;
 
-        _ColorUnion(_BitCol col) { this->bit_col = col; }
+        _ColorUnion(ColorBit col) { this->bit_col = col; }
         _ColorUnion(Color<u8> col) { this->true_col = col; }
     } dt;
 
-    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol col)
-        : _ty(Bit), dt(col) {};
-
 public:
     ConsoleColor(Color<u8> col)
-        : _ty(TrueColor), dt(col) {};
+        : _ty(ColorType::TrueColor), dt(col) {};
 
-    ConsoleColor(int col)
-        : _ty(Bit), dt((_ColorUnion::_BitCol)col) {};
+    ConsoleColor(ColorBit col)
+        : _ty(ColorType::Bit), dt(col) {};
 
     bool operator==(const ConsoleColor& other) const;
-    void display_fc();
-    void display_bc();
+    void display_fc(bool override_default = false);
+    void display_bc(bool override_default = false);
 
     static const ConsoleColor WHITE;
     static const ConsoleColor BLACK;
