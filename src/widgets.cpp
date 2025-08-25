@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstdlib>
 #include <ly/render/widgets.hpp>
 
 using namespace ly::render;
@@ -60,7 +61,7 @@ void Element::render(Buffer& buf) const {
     size_t offset = ch;
     for (size_t i = 0; i < this->_childs.size(); ++i) {
         if (offset > hp)
-            return;
+            break;
 
         auto& child = this->_childs[i];
 
@@ -83,5 +84,6 @@ void Element::render(Buffer& buf) const {
             margin.a.abs, offset + margin.b.abs, lwp, lhp);
 
         sb.render_widget(*child);
+        offset += lhp;
     }
 }
